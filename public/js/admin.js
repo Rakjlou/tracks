@@ -127,15 +127,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const statusCell = document.getElementById(`track-protection-${trackId}`);
                 if (data.hasCredentials) {
-                    statusCell.innerHTML = `
-                        <span class="credentials-status credentials-protected">Protected (${escapeHtml(data.username)})</span>
-                        <button onclick="removeTrackCredentials(${trackId})" class="btn-danger" style="padding: 2px 6px; font-size: 11px; margin-left: 5px;">Remove</button>
-                    `;
+                    statusCell.innerHTML = `<span class="credentials-status credentials-protected">Private</span>`;
                 } else {
-                    statusCell.innerHTML = `
-                        <span class="credentials-status credentials-unprotected">Public</span>
-                        <button onclick="showTrackCredentialsForm(${trackId})" style="padding: 2px 6px; font-size: 11px; margin-left: 5px;">Protect</button>
-                    `;
+                    statusCell.innerHTML = `<span class="credentials-status credentials-unprotected">Public</span>`;
                 }
             })
             .catch(error => {
@@ -145,76 +139,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    window.showTrackCredentialsForm = function(trackId) {
-        const statusCell = document.getElementById(`track-protection-${trackId}`);
-        statusCell.innerHTML = `
-            <div class="credentials-form">
-                <input type="text" id="track-username-${trackId}" placeholder="Username" required>
-                <input type="password" id="track-password-${trackId}" placeholder="Password" required>
-                <button onclick="setTrackCredentials(${trackId})">Set</button>
-                <button onclick="loadTrackCredentialStatus(${trackId})" class="btn-secondary">Cancel</button>
-            </div>
-        `;
-    };
-
-    window.setTrackCredentials = function(trackId) {
-        const username = document.getElementById(`track-username-${trackId}`).value.trim();
-        const password = document.getElementById(`track-password-${trackId}`).value;
-
-        if (!username || !password) {
-            alert('Please enter both username and password');
-            return;
-        }
-
-        fetch(`/admin/tracks/${trackId}/credentials`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, password })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to set credentials');
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert('Track protection set successfully!');
-            loadTrackCredentialStatus(trackId);
-        })
-        .catch(error => {
-            console.error('Error setting credentials:', error);
-            alert('Error setting credentials. Please try again.');
-        });
-    };
-
-    window.removeTrackCredentials = function(trackId) {
-        if (!confirm('Are you sure you want to remove protection from this track?')) {
-            return;
-        }
-
-        fetch(`/admin/tracks/${trackId}/credentials`, {
-            method: 'DELETE'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to remove credentials');
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert('Track protection removed successfully!');
-            loadTrackCredentialStatus(trackId);
-        })
-        .catch(error => {
-            console.error('Error removing credentials:', error);
-            alert('Error removing credentials. Please try again.');
-        });
-    };
 
     window.editTrack = function(trackId) {
-        alert('Edit track title functionality coming soon!');
+        fetch(`/admin/tracks/${trackId}/credentials`)
+            .then(response => response.json())
+            .then(data => {
+                showTrackCredentialsModal(trackId, data.credentials);
+            })
+            .catch(error => {
+                console.error('Error loading track credentials:', error);
+                alert('Error loading track credentials');
+            });
     };
 
     window.deleteTrack = function(trackId) {
@@ -330,14 +265,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.editPlaylist = function(playlistId) {
-        // Load playlist and tracks data first
+        // Load playlist, tracks, and credentials data
         Promise.all([
             fetch(`/admin/playlists/${playlistId}/tracks`),
-            fetch('/admin/tracks')
+            fetch('/admin/tracks'),
+            fetch(`/admin/playlists/${playlistId}/credentials`)
         ])
         .then(responses => Promise.all(responses.map(r => r.json())))
-        .then(([playlistTracksData, allTracksData]) => {
-            showEditPlaylistModal(playlistId, playlistTracksData.tracks, allTracksData.tracks);
+        .then(([playlistTracksData, allTracksData, credentialsData]) => {
+            showEditPlaylistModal(playlistId, playlistTracksData.tracks, allTracksData.tracks, credentialsData.credentials);
         })
         .catch(error => {
             console.error('Error loading playlist data:', error);
@@ -367,28 +303,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    function showEditPlaylistModal(playlistId, playlistTracks, allTracks) {
-        const availableTracks = allTracks.filter(track =>
-            !playlistTracks.find(pt => pt.id === track.id)
-        );
-
+    function showTrackCredentialsModal(trackId, credentials) {
         const modalHTML = `
-            <div class="modal-overlay" id="editPlaylistModal">
-                <div class="modal" style="max-width: 600px;">
+            <div class="modal-overlay" id="trackCredentialsModal">
+                <div class="modal" style="max-width: 500px;">
                     <div class="modal-header">
-                        <h3 class="modal-title">Edit Playlist</h3>
-                        <button class="modal-close" onclick="closeEditPlaylistModal()">×</button>
+                        <h3 class="modal-title">Manage Track Credentials</h3>
+                        <button class="modal-close" onclick="closeTrackCredentialsModal()">×</button>
                     </div>
 
                     <div class="form-group">
-                        <h4>Current Tracks (${playlistTracks.length})</h4>
-                        <div id="currentTracks" style="max-height: 200px; overflow-y: auto; border: 1px solid #333; background: #000; padding: 10px;">
-                            ${playlistTracks.length === 0 ?
-                                '<div style="color: #666; font-style: italic;">No tracks in playlist</div>' :
-                                playlistTracks.map(track => `
+                        <h4>Current Credentials (${credentials.length})</h4>
+                        <div id="currentCredentials" style="max-height: 200px; overflow-y: auto; border: 1px solid #333; background: #000; padding: 10px;">
+                            ${credentials.length === 0 ?
+                                '<div style="color: #666; font-style: italic;">No credentials set - track is public</div>' :
+                                credentials.map(cred => `
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #222;">
-                                        <span>${escapeHtml(track.title)}</span>
-                                        <button onclick="removeTrackFromPlaylist(${playlistId}, ${track.id})" class="btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
+                                        <span>${escapeHtml(cred.username)}</span>
+                                        <button onclick="removeCredential(${cred.id}, ${trackId}, 'track')" class="btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
                                     </div>
                                 `).join('')
                             }
@@ -396,14 +328,91 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="form-group">
-                        <h4>Add Track</h4>
-                        <select id="trackToAdd" style="width: 100%; padding: 10px; background: #111; border: 1px solid #333; color: #fff;">
-                            <option value="">Select a track to add...</option>
-                            ${availableTracks.map(track => `
-                                <option value="${track.id}">${escapeHtml(track.title)}</option>
-                            `).join('')}
-                        </select>
-                        <button onclick="addTrackToPlaylist(${playlistId})" style="margin-top: 10px;">Add Track</button>
+                        <h4>Add New Credential</h4>
+                        <div class="credentials-form">
+                            <input type="text" id="newTrackUsername" placeholder="Username" required>
+                            <input type="password" id="newTrackPassword" placeholder="Password" required>
+                            <button onclick="addTrackCredential(${trackId})">Add</button>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button onclick="closeTrackCredentialsModal()" class="btn-secondary">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    function showEditPlaylistModal(playlistId, playlistTracks, allTracks, credentials) {
+        const availableTracks = allTracks.filter(track =>
+            !playlistTracks.find(pt => pt.id === track.id)
+        );
+
+        const modalHTML = `
+            <div class="modal-overlay" id="editPlaylistModal">
+                <div class="modal" style="max-width: 700px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Edit Playlist</h3>
+                        <button class="modal-close" onclick="closeEditPlaylistModal()">×</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <div class="form-group">
+                                <h4>Current Tracks (${playlistTracks.length})</h4>
+                                <div id="currentTracks" style="max-height: 200px; overflow-y: auto; border: 1px solid #333; background: #000; padding: 10px;">
+                                    ${playlistTracks.length === 0 ?
+                                        '<div style="color: #666; font-style: italic;">No tracks in playlist</div>' :
+                                        playlistTracks.map(track => `
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #222;">
+                                                <span>${escapeHtml(track.title)}</span>
+                                                <button onclick="removeTrackFromPlaylist(${playlistId}, ${track.id})" class="btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
+                                            </div>
+                                        `).join('')
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <h4>Add Track</h4>
+                                <select id="trackToAdd" style="width: 100%; padding: 10px; background: #111; border: 1px solid #333; color: #fff;">
+                                    <option value="">Select a track to add...</option>
+                                    ${availableTracks.map(track => `
+                                        <option value="${track.id}">${escapeHtml(track.title)}</option>
+                                    `).join('')}
+                                </select>
+                                <button onclick="addTrackToPlaylist(${playlistId})" style="margin-top: 10px;">Add Track</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="form-group">
+                                <h4>Access Credentials (${credentials.length})</h4>
+                                <div id="currentPlaylistCredentials" style="max-height: 200px; overflow-y: auto; border: 1px solid #333; background: #000; padding: 10px;">
+                                    ${credentials.length === 0 ?
+                                        '<div style="color: #666; font-style: italic;">No credentials set - playlist is public</div>' :
+                                        credentials.map(cred => `
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #222;">
+                                                <span>${escapeHtml(cred.username)}</span>
+                                                <button onclick="removeCredential(${cred.id}, ${playlistId}, 'playlist')" class="btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
+                                            </div>
+                                        `).join('')
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <h4>Add New Credential</h4>
+                                <div class="credentials-form">
+                                    <input type="text" id="newPlaylistUsername" placeholder="Username" required>
+                                    <input type="password" id="newPlaylistPassword" placeholder="Password" required>
+                                    <button onclick="addPlaylistCredential(${playlistId})">Add</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="modal-actions">
@@ -487,15 +496,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const statusCell = document.getElementById(`playlist-protection-${playlistId}`);
                 if (data.hasCredentials) {
-                    statusCell.innerHTML = `
-                        <span class="credentials-status credentials-protected">Protected (${escapeHtml(data.username)})</span>
-                        <button onclick="removePlaylistCredentials(${playlistId})" class="btn-danger" style="padding: 2px 6px; font-size: 11px; margin-left: 5px;">Remove</button>
-                    `;
+                    statusCell.innerHTML = `<span class="credentials-status credentials-protected">Private</span>`;
                 } else {
-                    statusCell.innerHTML = `
-                        <span class="credentials-status credentials-unprotected">Public</span>
-                        <button onclick="showPlaylistCredentialsForm(${playlistId})" style="padding: 2px 6px; font-size: 11px; margin-left: 5px;">Protect</button>
-                    `;
+                    statusCell.innerHTML = `<span class="credentials-status credentials-unprotected">Public</span>`;
                 }
             })
             .catch(error => {
@@ -505,21 +508,50 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    window.showPlaylistCredentialsForm = function(playlistId) {
-        const statusCell = document.getElementById(`playlist-protection-${playlistId}`);
-        statusCell.innerHTML = `
-            <div class="credentials-form">
-                <input type="text" id="playlist-username-${playlistId}" placeholder="Username" required>
-                <input type="password" id="playlist-password-${playlistId}" placeholder="Password" required>
-                <button onclick="setPlaylistCredentials(${playlistId})">Set</button>
-                <button onclick="loadPlaylistCredentialStatus(${playlistId})" class="btn-secondary">Cancel</button>
-            </div>
-        `;
+
+    window.closeTrackCredentialsModal = function() {
+        const modal = document.getElementById('trackCredentialsModal');
+        if (modal) {
+            modal.remove();
+        }
     };
 
-    window.setPlaylistCredentials = function(playlistId) {
-        const username = document.getElementById(`playlist-username-${playlistId}`).value.trim();
-        const password = document.getElementById(`playlist-password-${playlistId}`).value;
+    window.addTrackCredential = function(trackId) {
+        const username = document.getElementById('newTrackUsername').value.trim();
+        const password = document.getElementById('newTrackPassword').value;
+
+        if (!username || !password) {
+            alert('Please enter both username and password');
+            return;
+        }
+
+        fetch(`/admin/tracks/${trackId}/credentials`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to add credential');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('Credential added successfully!');
+            closeTrackCredentialsModal();
+            loadTrackCredentialStatus(trackId);
+        })
+        .catch(error => {
+            console.error('Error adding credential:', error);
+            alert('Error adding credential. Please try again.');
+        });
+    };
+
+    window.addPlaylistCredential = function(playlistId) {
+        const username = document.getElementById('newPlaylistUsername').value.trim();
+        const password = document.getElementById('newPlaylistPassword').value;
 
         if (!username || !password) {
             alert('Please enter both username and password');
@@ -535,41 +567,48 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Failed to set credentials');
+                throw new Error('Failed to add credential');
             }
             return response.json();
         })
         .then(data => {
-            alert('Playlist protection set successfully!');
+            alert('Credential added successfully!');
+            closeEditPlaylistModal();
             loadPlaylistCredentialStatus(playlistId);
         })
         .catch(error => {
-            console.error('Error setting credentials:', error);
-            alert('Error setting credentials. Please try again.');
+            console.error('Error adding credential:', error);
+            alert('Error adding credential. Please try again.');
         });
     };
 
-    window.removePlaylistCredentials = function(playlistId) {
-        if (!confirm('Are you sure you want to remove protection from this playlist?')) {
+    window.removeCredential = function(credentialId, resourceId, resourceType) {
+        if (!confirm('Are you sure you want to remove this credential?')) {
             return;
         }
 
-        fetch(`/admin/playlists/${playlistId}/credentials`, {
+        fetch(`/admin/credentials/${credentialId}`, {
             method: 'DELETE'
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Failed to remove credentials');
+                throw new Error('Failed to remove credential');
             }
             return response.json();
         })
         .then(data => {
-            alert('Playlist protection removed successfully!');
-            loadPlaylistCredentialStatus(playlistId);
+            alert('Credential removed successfully!');
+            if (resourceType === 'track') {
+                closeTrackCredentialsModal();
+                loadTrackCredentialStatus(resourceId);
+            } else {
+                closeEditPlaylistModal();
+                loadPlaylistCredentialStatus(resourceId);
+            }
         })
         .catch(error => {
-            console.error('Error removing credentials:', error);
-            alert('Error removing credentials. Please try again.');
+            console.error('Error removing credential:', error);
+            alert('Error removing credential. Please try again.');
         });
     };
 });

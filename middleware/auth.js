@@ -41,12 +41,12 @@ function requireResourceAuth(resourceType, getResourceIdFromParams) {
                 WHERE resource_type = ? AND resource_id = ?
             `;
 
-            db.get(credentialsQuery, [resourceType, resourceId], (err, credential) => {
+            db.all(credentialsQuery, [resourceType, resourceId], (err, credentials) => {
                 if (err) {
                     return res.status(500).json({ error: 'Database error' });
                 }
 
-                if (!credential) {
+                if (credentials.length === 0) {
                     return next();
                 }
 
@@ -61,7 +61,11 @@ function requireResourceAuth(resourceType, getResourceIdFromParams) {
                 const credString = Buffer.from(base64Credentials, 'base64').toString('ascii');
                 const [username, password] = credString.split(':');
 
-                if (credential.username === username && bcrypt.compareSync(password, credential.password)) {
+                const validCredential = credentials.find(cred =>
+                    cred.username === username && bcrypt.compareSync(password, cred.password)
+                );
+
+                if (validCredential) {
                     req.authenticatedUser = username;
                     next();
                 } else {
