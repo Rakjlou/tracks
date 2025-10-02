@@ -4,6 +4,7 @@ const { initDatabase } = require('./database/db');
 const { createTables } = require('./database/schema');
 const { requireAdminAuth } = require('./middleware/auth');
 const adminRoutes = require('./routes/admin');
+const publicRoutes = require('./routes/public');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/admin', adminRoutes);
+app.use('/', publicRoutes);
 
 app.get('/admin', requireAdminAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'admin.html'));

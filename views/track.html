@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Review - Track</title>
+    <link rel="stylesheet" href="/css/player.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="track-title" id="trackTitle">Loading...</h1>
+            <div class="track-info" id="trackInfo">Loading track information...</div>
+        </div>
+
+        <div class="player-container">
+            <div class="controls">
+                <button class="play-btn" id="playBtn" disabled>▶</button>
+                <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+            </div>
+
+            <div class="waveform-container" id="waveformContainer">
+                <div class="waveform-placeholder">
+                    Click here to load waveform and enable audio playback
+                </div>
+            </div>
+
+            <div class="comments-toggle">
+                <button class="toggle-btn" id="commentsToggle">Show Closed Comments</button>
+            </div>
+        </div>
+
+        <div class="comments-section">
+            <h3 style="margin-bottom: 15px;">Comments</h3>
+            <div class="comments-placeholder" id="commentsContainer">
+                No comments yet. Click on the waveform to add a comment!
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/track.js"></script>
+</body>
+</html>

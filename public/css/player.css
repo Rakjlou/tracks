@@ -1,0 +1,166 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 14px;
+    background-color: #000;
+    color: #fff;
+    line-height: 1.5;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
+}
+
+.track-title {
+    font-size: 24px;
+    font-weight: normal;
+    margin-bottom: 10px;
+}
+
+.track-info {
+    color: #666;
+    font-size: 12px;
+}
+
+.player-container {
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+
+.play-btn {
+    background-color: #333;
+    border: 1px solid #555;
+    color: #fff;
+    font-family: inherit;
+    font-size: 18px;
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.play-btn:hover {
+    background-color: #555;
+}
+
+.time-display {
+    font-family: inherit;
+    font-size: 14px;
+    color: #ccc;
+    min-width: 120px;
+}
+
+.waveform-container {
+    background-color: #000;
+    border: 1px solid #333;
+    border-radius: 4px;
+    height: 120px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.waveform-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+    font-style: italic;
+}
+
+.comments-toggle {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.toggle-btn {
+    background-color: #222;
+    border: 1px solid #444;
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.toggle-btn:hover {
+    background-color: #444;
+}
+
+.comments-section {
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 20px;
+    min-height: 200px;
+}
+
+.comments-placeholder {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.error-message {
+    background-color: #300;
+    border: 1px solid #500;
+    color: #fcc;
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.loading {
+    text-align: center;
+    color: #666;
+    padding: 40px;
+    font-style: italic;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .time-display {
+        text-align: center;
+    }
+}
