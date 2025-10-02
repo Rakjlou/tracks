@@ -203,4 +203,51 @@ router.post('/api/track/:uuid/comments/:commentId/reply', (req, res) => {
     });
 });
 
+router.put('/api/track/:uuid/comments/:commentId/close', (req, res) => {
+    const { uuid, commentId } = req.params;
+
+    const db = getDatabase();
+
+    // First verify the track exists
+    const trackQuery = 'SELECT id FROM tracks WHERE uuid = ?';
+    db.get(trackQuery, [uuid], (err, track) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!track) {
+            return res.status(404).json({ error: 'Track not found' });
+        }
+
+        // Verify the comment exists and is a root comment
+        const commentQuery = 'SELECT id, is_closed FROM comments WHERE id = ? AND track_id = ? AND parent_id IS NULL';
+        db.get(commentQuery, [commentId, track.id], (err, comment) => {
+            if (err) {
+                return res.status(500).json({ error: 'Database error' });
+            }
+
+            if (!comment) {
+                return res.status(404).json({ error: 'Root comment not found' });
+            }
+
+            if (comment.is_closed) {
+                return res.status(400).json({ error: 'Thread is already closed' });
+            }
+
+            // Close the thread
+            const updateQuery = 'UPDATE comments SET is_closed = 1 WHERE id = ?';
+            db.run(updateQuery, [commentId], function(err) {
+                if (err) {
+                    return res.status(500).json({ error: 'Failed to close thread' });
+                }
+
+                res.json({
+                    message: 'Thread closed successfully',
+                    commentId: parseInt(commentId)
+                });
+            });
+        });
+    });
+});
+
 module.exports = router;

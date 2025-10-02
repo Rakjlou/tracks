@@ -412,7 +412,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.closeThread = function(commentId) {
-        alert('Close thread functionality coming next!');
+        if (!confirm('Are you sure you want to close this thread? This action cannot be undone.')) {
+            return;
+        }
+
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Closing...';
+
+        fetch(`/api/track/${trackUuid}/comments/${commentId}/close`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to close thread');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Reload comments and refresh the thread display
+            loadCommentMarkers().then(() => {
+                showCommentThread(commentId);
+            });
+            alert('Thread closed successfully!');
+        })
+        .catch(error => {
+            console.error('Error closing thread:', error);
+            alert('Failed to close thread. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Close Thread';
+        });
     }
 
     function toggleClosedComments() {
@@ -424,7 +456,8 @@ document.addEventListener('DOMContentLoaded', function() {
             commentsToggle.textContent = 'Show Closed Comments';
         }
 
-        // TODO: Update marker visibility
+        // Reload markers with new visibility setting
+        loadCommentMarkers();
         console.log('Toggled closed comments:', showClosedComments);
     }
 
