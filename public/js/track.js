@@ -123,19 +123,39 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadCommentMarkers() {
-        // Placeholder - will load actual comments from API
         console.log('Loading comment markers...');
 
-        // Demo: Add a sample comment marker at 30 seconds
-        if (wavesurfer.getDuration() > 30) {
-            regions.addRegion({
-                start: 30,
-                end: 30.1,
-                color: 'rgba(255, 0, 0, 0.3)',
-                drag: false,
-                resize: false
+        // Clear existing regions
+        regions.clearRegions();
+
+        fetch(`/api/track/${trackUuid}/comments`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load comments');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const rootComments = data.comments.filter(comment => !comment.parent_id);
+
+                rootComments.forEach(comment => {
+                    if (!comment.is_closed || showClosedComments) {
+                        regions.addRegion({
+                            start: comment.timestamp,
+                            end: comment.timestamp + 0.1,
+                            color: comment.is_closed ? 'rgba(128, 128, 128, 1)' : 'rgba(255, 0, 0, 1)',
+                            drag: false,
+                            resize: false,
+                            data: { commentId: comment.id }
+                        });
+                    }
+                });
+
+                console.log(`Loaded ${rootComments.length} comment markers`);
+            })
+            .catch(error => {
+                console.error('Error loading comments:', error);
             });
-        }
     }
 
     function showCommentModal(timestamp) {
@@ -143,7 +163,92 @@ document.addEventListener('DOMContentLoaded', function() {
         const seconds = Math.floor(timestamp % 60);
         const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-        alert(`Add comment at ${timeStr}\n\nComment modal coming next!`);
+        const modalHTML = `
+            <div class="modal-overlay" id="commentModal">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Add Comment at ${timeStr}</h3>
+                        <button class="modal-close" onclick="closeCommentModal()">×</button>
+                    </div>
+                    <form id="commentForm">
+                        <div class="form-group">
+                            <label for="commentUsername">Username:</label>
+                            <input type="text" id="commentUsername" name="username" value="anonymous" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="commentContent">Comment:</label>
+                            <textarea id="commentContent" name="content" placeholder="Enter your comment..." required></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeCommentModal()">Cancel</button>
+                            <button type="submit">Post Comment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        const form = document.getElementById('commentForm');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitComment(timestamp);
+        });
+
+        document.getElementById('commentContent').focus();
+    }
+
+    window.closeCommentModal = function() {
+        const modal = document.getElementById('commentModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    function submitComment(timestamp) {
+        const username = document.getElementById('commentUsername').value.trim();
+        const content = document.getElementById('commentContent').value.trim();
+
+        if (!username || !content) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        const submitBtn = document.querySelector('#commentForm button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Posting...';
+
+        fetch(`/api/track/${trackUuid}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                timestamp: timestamp,
+                username: username,
+                content: content
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to post comment');
+            }
+            return response.json();
+        })
+        .then(data => {
+            closeCommentModal();
+            loadCommentMarkers(); // Reload to show new comment
+            alert('Comment posted successfully!');
+        })
+        .catch(error => {
+            console.error('Error posting comment:', error);
+            alert('Failed to post comment. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Post Comment';
+        });
     }
 
     function toggleClosedComments() {

@@ -66,4 +66,81 @@ router.get('/api/track/:uuid/audio', (req, res) => {
     });
 });
 
+router.get('/api/track/:uuid/comments', (req, res) => {
+    const { uuid } = req.params;
+
+    const db = getDatabase();
+
+    const trackQuery = 'SELECT id FROM tracks WHERE uuid = ?';
+    db.get(trackQuery, [uuid], (err, track) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!track) {
+            return res.status(404).json({ error: 'Track not found' });
+        }
+
+        const commentsQuery = `
+            SELECT id, parent_id, timestamp, username, content, is_closed, created_at
+            FROM comments
+            WHERE track_id = ?
+            ORDER BY timestamp ASC, created_at ASC
+        `;
+
+        db.all(commentsQuery, [track.id], (err, comments) => {
+            if (err) {
+                return res.status(500).json({ error: 'Database error' });
+            }
+
+            res.json({ comments });
+        });
+    });
+});
+
+router.post('/api/track/:uuid/comments', (req, res) => {
+    const { uuid } = req.params;
+    const { timestamp, username, content } = req.body;
+
+    if (!timestamp || !username || !content) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const db = getDatabase();
+
+    const trackQuery = 'SELECT id FROM tracks WHERE uuid = ?';
+    db.get(trackQuery, [uuid], (err, track) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!track) {
+            return res.status(404).json({ error: 'Track not found' });
+        }
+
+        const insertQuery = `
+            INSERT INTO comments (track_id, timestamp, username, content)
+            VALUES (?, ?, ?, ?)
+        `;
+
+        db.run(insertQuery, [track.id, timestamp, username.trim(), content.trim()], function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to save comment' });
+            }
+
+            res.status(201).json({
+                message: 'Comment added successfully',
+                comment: {
+                    id: this.lastID,
+                    track_id: track.id,
+                    timestamp: timestamp,
+                    username: username.trim(),
+                    content: content.trim(),
+                    created_at: new Date().toISOString()
+                }
+            });
+        });
+    });
+});
+
 module.exports = router;
