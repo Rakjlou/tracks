@@ -9,9 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentTrack = null;
 
-    const trackUuid = window.location.pathname.split('/track/')[1];
+    const trackUuid = extractUuidFromPath('track');
 
-    // Initialize the reusable audio comment widget
     const audioWidget = new AudioCommentWidget({
         waveformContainer: '#waveform',
         waveformPlaceholder: waveformPlaceholder,
@@ -23,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Track ready in widget');
         },
         onError: (message) => {
-            showError(message);
+            showError(message, trackTitle, trackInfo);
         }
     });
 
@@ -46,25 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 audioWidget.loadTrack(trackUuid);
             })
             .catch(error => {
-                console.error('Error loading track:', error);
-                showError('Track not found or failed to load');
+                showError(handleFetchError(error, 'Track not found or failed to load'), trackTitle, trackInfo);
             });
     }
 
     function displayTrackInfo() {
         trackTitle.textContent = currentTrack.title;
         trackInfo.textContent = `UUID: ${currentTrack.uuid} • Created: ${new Date(currentTrack.created_at).toLocaleDateString()}`;
-    }
-
-    function showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = message;
-
-        trackTitle.textContent = 'Error';
-        trackInfo.textContent = '';
-
-        const container = document.querySelector('.container');
-        container.insertBefore(errorDiv, container.firstChild.nextSibling);
     }
 });

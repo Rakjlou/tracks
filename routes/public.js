@@ -1,190 +1,81 @@
 const express = require('express');
 const path = require('path');
 const { getDatabase } = require('../database/db');
-const { requireResourceAuth } = require('../middleware/auth');
+const { requireResourceAuth, fetchResource } = require('../middleware/resource');
+const { getIdFromUuid } = require('../database/queries');
 
 const router = express.Router();
 
-function getTrackIdFromUuid(req) {
-    const { uuid } = req.params;
-    const db = getDatabase();
-
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT id FROM tracks WHERE uuid = ?';
-        db.get(query, [uuid], (err, track) => {
-            if (err) reject(err);
-            else resolve(track ? track.id : null);
-        });
-    });
+function getResourceIdFromUuid(resourceType) {
+    return (req) => {
+        const { uuid } = req.params;
+        return getIdFromUuid(resourceType, uuid);
+    };
 }
 
-function getPlaylistIdFromUuid(req) {
-    const { uuid } = req.params;
-    const db = getDatabase();
-
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT id FROM playlists WHERE uuid = ?';
-        db.get(query, [uuid], (err, playlist) => {
-            if (err) reject(err);
-            else resolve(playlist ? playlist.id : null);
-        });
-    });
-}
-
-router.get('/track/:uuid', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
-    const { uuid } = req.params;
-
-    const db = getDatabase();
-    const query = 'SELECT id, uuid, title FROM tracks WHERE uuid = ?';
-
-    db.get(query, [uuid], (err, track) => {
-        if (err) {
-            return res.status(500).send('Database error');
-        }
-
-        if (!track) {
-            return res.status(404).send('Track not found');
-        }
-
-        res.sendFile(path.join(__dirname, '..', 'views', 'track.html'));
-    });
+router.get('/track/:uuid', requireResourceAuth('track', getResourceIdFromUuid('track')), fetchResource('track'), (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'track.html'));
 });
 
-router.get('/playlist/:uuid', requireResourceAuth('playlist', getPlaylistIdFromUuid), (req, res) => {
-    const { uuid } = req.params;
-
-    const db = getDatabase();
-    const query = 'SELECT id, uuid, title FROM playlists WHERE uuid = ?';
-
-    db.get(query, [uuid], (err, playlist) => {
-        if (err) {
-            return res.status(500).send('Database error');
-        }
-
-        if (!playlist) {
-            return res.status(404).send('Playlist not found');
-        }
-
-        res.sendFile(path.join(__dirname, '..', 'views', 'playlist.html'));
-    });
+router.get('/playlist/:uuid', requireResourceAuth('playlist', getResourceIdFromUuid('playlist')), fetchResource('playlist'), (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'playlist.html'));
 });
 
-router.get('/api/playlist/:uuid', requireResourceAuth('playlist', getPlaylistIdFromUuid), (req, res) => {
-    const { uuid } = req.params;
-
+router.get('/api/playlist/:uuid', requireResourceAuth('playlist', getResourceIdFromUuid('playlist')), fetchResource('playlist'), (req, res) => {
+    const playlist = req.resource;
     const db = getDatabase();
-    const query = 'SELECT id, uuid, title, created_at FROM playlists WHERE uuid = ?';
 
-    db.get(query, [uuid], (err, playlist) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-
-        if (!playlist) {
-            return res.status(404).json({ error: 'Playlist not found' });
-        }
-
-        // Get tracks in playlist
-        const tracksQuery = `
-            SELECT t.id, t.uuid, t.title, t.filename, pt.position
-            FROM playlist_tracks pt
-            JOIN tracks t ON pt.track_id = t.id
-            WHERE pt.playlist_id = ?
-            ORDER BY pt.position ASC
-        `;
-
-        db.all(tracksQuery, [playlist.id], (err, tracks) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database error' });
-            }
-
-            res.json({
-                playlist: {
-                    ...playlist,
-                    tracks: tracks
-                }
-            });
-        });
-    });
-});
-
-router.get('/api/track/:uuid', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
-    const { uuid } = req.params;
-
-    const db = getDatabase();
-    const query = `
-        SELECT id, uuid, filename, title, duration, created_at
-        FROM tracks
-        WHERE uuid = ?
+    // Get tracks in playlist
+    const tracksQuery = `
+        SELECT t.id, t.uuid, t.title, t.filename, pt.position
+        FROM playlist_tracks pt
+        JOIN tracks t ON pt.track_id = t.id
+        WHERE pt.playlist_id = ?
+        ORDER BY pt.position ASC
     `;
 
-    db.get(query, [uuid], (err, track) => {
+    db.all(tracksQuery, [playlist.id], (err, tracks) => {
         if (err) {
             return res.status(500).json({ error: 'Database error' });
         }
 
-        if (!track) {
-            return res.status(404).json({ error: 'Track not found' });
-        }
-
-        res.json({ track });
-    });
-});
-
-router.get('/api/track/:uuid/audio', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
-    const { uuid } = req.params;
-
-    const db = getDatabase();
-    const query = 'SELECT filename FROM tracks WHERE uuid = ?';
-
-    db.get(query, [uuid], (err, track) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-
-        if (!track) {
-            return res.status(404).json({ error: 'Track not found' });
-        }
-
-        const audioPath = path.join(__dirname, '..', 'public', 'uploads', 'audio', track.filename);
-        res.sendFile(audioPath);
-    });
-});
-
-router.get('/api/track/:uuid/comments', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
-    const { uuid } = req.params;
-
-    const db = getDatabase();
-
-    const trackQuery = 'SELECT id FROM tracks WHERE uuid = ?';
-    db.get(trackQuery, [uuid], (err, track) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-
-        if (!track) {
-            return res.status(404).json({ error: 'Track not found' });
-        }
-
-        const commentsQuery = `
-            SELECT id, parent_id, timestamp, username, content, is_closed, created_at
-            FROM comments
-            WHERE track_id = ?
-            ORDER BY timestamp ASC, created_at ASC
-        `;
-
-        db.all(commentsQuery, [track.id], (err, comments) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database error' });
+        res.json({
+            playlist: {
+                ...playlist,
+                tracks: tracks
             }
-
-            res.json({ comments });
         });
     });
 });
 
-router.post('/api/track/:uuid/comments', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
-    const { uuid } = req.params;
+router.get('/api/track/:uuid', requireResourceAuth('track', getResourceIdFromUuid('track')), fetchResource('track'), (req, res) => {
+    res.json({ track: req.resource });
+});
+
+router.get('/api/track/:uuid/audio', requireResourceAuth('track', getResourceIdFromUuid('track')), fetchResource('track'), (req, res) => {
+    const audioPath = path.join(__dirname, '..', 'public', 'uploads', 'audio', req.resource.filename);
+    res.sendFile(audioPath);
+});
+
+router.get('/api/track/:uuid/comments', requireResourceAuth('track', getResourceIdFromUuid('track')), fetchResource('track'), (req, res) => {
+    const db = getDatabase();
+    const commentsQuery = `
+        SELECT id, parent_id, timestamp, username, content, is_closed, created_at
+        FROM comments
+        WHERE track_id = ?
+        ORDER BY timestamp ASC, created_at ASC
+    `;
+
+    db.all(commentsQuery, [req.resource.id], (err, comments) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        res.json({ comments });
+    });
+});
+
+router.post('/api/track/:uuid/comments', requireResourceAuth('track', getResourceIdFromUuid('track')), fetchResource('track'), (req, res) => {
     const { timestamp, username, content } = req.body;
 
     if (!timestamp || !username || !content) {
@@ -193,32 +84,67 @@ router.post('/api/track/:uuid/comments', requireResourceAuth('track', getTrackId
 
     const db = getDatabase();
 
-    const trackQuery = 'SELECT id FROM tracks WHERE uuid = ?';
-    db.get(trackQuery, [uuid], (err, track) => {
+    const insertQuery = `
+        INSERT INTO comments (track_id, timestamp, username, content)
+        VALUES (?, ?, ?, ?)
+    `;
+
+    db.run(insertQuery, [req.resource.id, timestamp, username.trim(), content.trim()], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to save comment' });
+        }
+
+        res.status(201).json({
+            message: 'Comment added successfully',
+            comment: {
+                id: this.lastID,
+                track_id: req.resource.id,
+                timestamp: timestamp,
+                username: username.trim(),
+                content: content.trim(),
+                created_at: new Date().toISOString()
+            }
+        });
+    });
+});
+
+router.post('/api/track/:uuid/comments/:commentId/reply', requireResourceAuth('track', getResourceIdFromUuid('track')), fetchResource('track'), (req, res) => {
+    const { commentId } = req.params;
+    const { username, content } = req.body;
+
+    if (!username || !content) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const db = getDatabase();
+
+    const parentQuery = 'SELECT id, timestamp FROM comments WHERE id = ? AND track_id = ?';
+    db.get(parentQuery, [commentId, req.resource.id], (err, parentComment) => {
         if (err) {
             return res.status(500).json({ error: 'Database error' });
         }
 
-        if (!track) {
-            return res.status(404).json({ error: 'Track not found' });
+        if (!parentComment) {
+            return res.status(404).json({ error: 'Parent comment not found' });
         }
 
         const insertQuery = `
-            INSERT INTO comments (track_id, timestamp, username, content)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO comments (track_id, parent_id, timestamp, username, content)
+            VALUES (?, ?, ?, ?, ?)
         `;
 
-        db.run(insertQuery, [track.id, timestamp, username.trim(), content.trim()], function(err) {
+        db.run(insertQuery, [req.resource.id, commentId, parentComment.timestamp, username.trim(), content.trim()], function(err) {
             if (err) {
-                return res.status(500).json({ error: 'Failed to save comment' });
+                return res.status(500).json({ error: 'Failed to save reply' });
             }
 
             res.status(201).json({
-                message: 'Comment added successfully',
+                message: 'Reply added successfully',
                 comment: {
                     id: this.lastID,
-                    track_id: track.id,
-                    timestamp: timestamp,
+                    track_id: req.resource.id,
+                    parent_id: parseInt(commentId),
+                    timestamp: parentComment.timestamp,
                     username: username.trim(),
                     content: content.trim(),
                     created_at: new Date().toISOString()
@@ -228,108 +154,34 @@ router.post('/api/track/:uuid/comments', requireResourceAuth('track', getTrackId
     });
 });
 
-router.post('/api/track/:uuid/comments/:commentId/reply', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
-    const { uuid, commentId } = req.params;
-    const { username, content } = req.body;
-
-    if (!username || !content) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
+router.put('/api/track/:uuid/comments/:commentId/close', requireResourceAuth('track', getResourceIdFromUuid('track')), fetchResource('track'), (req, res) => {
+    const { commentId } = req.params;
 
     const db = getDatabase();
 
-    // First verify the track exists
-    const trackQuery = 'SELECT id FROM tracks WHERE uuid = ?';
-    db.get(trackQuery, [uuid], (err, track) => {
+    const commentQuery = 'SELECT id, is_closed FROM comments WHERE id = ? AND track_id = ? AND parent_id IS NULL';
+    db.get(commentQuery, [commentId, req.resource.id], (err, comment) => {
         if (err) {
             return res.status(500).json({ error: 'Database error' });
         }
 
-        if (!track) {
-            return res.status(404).json({ error: 'Track not found' });
+        if (!comment) {
+            return res.status(404).json({ error: 'Root comment not found' });
         }
 
-        // Then verify the parent comment exists and get its timestamp
-        const parentQuery = 'SELECT id, timestamp FROM comments WHERE id = ? AND track_id = ?';
-        db.get(parentQuery, [commentId, track.id], (err, parentComment) => {
+        if (comment.is_closed) {
+            return res.status(400).json({ error: 'Thread is already closed' });
+        }
+
+        const updateQuery = 'UPDATE comments SET is_closed = 1 WHERE id = ?';
+        db.run(updateQuery, [commentId], function(err) {
             if (err) {
-                return res.status(500).json({ error: 'Database error' });
+                return res.status(500).json({ error: 'Failed to close thread' });
             }
 
-            if (!parentComment) {
-                return res.status(404).json({ error: 'Parent comment not found' });
-            }
-
-            // Insert the reply
-            const insertQuery = `
-                INSERT INTO comments (track_id, parent_id, timestamp, username, content)
-                VALUES (?, ?, ?, ?, ?)
-            `;
-
-            db.run(insertQuery, [track.id, commentId, parentComment.timestamp, username.trim(), content.trim()], function(err) {
-                if (err) {
-                    return res.status(500).json({ error: 'Failed to save reply' });
-                }
-
-                res.status(201).json({
-                    message: 'Reply added successfully',
-                    comment: {
-                        id: this.lastID,
-                        track_id: track.id,
-                        parent_id: parseInt(commentId),
-                        timestamp: parentComment.timestamp,
-                        username: username.trim(),
-                        content: content.trim(),
-                        created_at: new Date().toISOString()
-                    }
-                });
-            });
-        });
-    });
-});
-
-router.put('/api/track/:uuid/comments/:commentId/close', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
-    const { uuid, commentId } = req.params;
-
-    const db = getDatabase();
-
-    // First verify the track exists
-    const trackQuery = 'SELECT id FROM tracks WHERE uuid = ?';
-    db.get(trackQuery, [uuid], (err, track) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-
-        if (!track) {
-            return res.status(404).json({ error: 'Track not found' });
-        }
-
-        // Verify the comment exists and is a root comment
-        const commentQuery = 'SELECT id, is_closed FROM comments WHERE id = ? AND track_id = ? AND parent_id IS NULL';
-        db.get(commentQuery, [commentId, track.id], (err, comment) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database error' });
-            }
-
-            if (!comment) {
-                return res.status(404).json({ error: 'Root comment not found' });
-            }
-
-            if (comment.is_closed) {
-                return res.status(400).json({ error: 'Thread is already closed' });
-            }
-
-            // Close the thread
-            const updateQuery = 'UPDATE comments SET is_closed = 1 WHERE id = ?';
-            db.run(updateQuery, [commentId], function(err) {
-                if (err) {
-                    return res.status(500).json({ error: 'Failed to close thread' });
-                }
-
-                res.json({
-                    message: 'Thread closed successfully',
-                    commentId: parseInt(commentId)
-                });
+            res.json({
+                message: 'Thread closed successfully',
+                commentId: parseInt(commentId)
             });
         });
     });

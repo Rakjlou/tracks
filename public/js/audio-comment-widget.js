@@ -1,8 +1,3 @@
-/**
- * Reusable Audio Comment Widget
- * Handles WaveSurfer integration, comment markers, threading, and all comment functionality
- */
-
 class AudioCommentWidget {
     constructor(options) {
         this.options = {
@@ -44,11 +39,11 @@ class AudioCommentWidget {
     loadTrack(trackUuid) {
         this.currentTrackUuid = trackUuid;
         this.resetPlayer();
-        
+
         if (this.options.waveformPlaceholder) {
             this.options.waveformPlaceholder.style.display = 'block';
         }
-        
+
         if (this.options.commentsContainer) {
             this.options.commentsContainer.innerHTML = '<div class="comments-placeholder">No comments yet. Click on the waveform to add a comment!</div>';
         }
@@ -104,18 +99,18 @@ class AudioCommentWidget {
             if (this.options.playButton) {
                 this.options.playButton.disabled = false;
             }
-            
+
             if (this.options.waveformPlaceholder) {
                 this.options.waveformPlaceholder.style.display = 'none';
             }
-            
+
             if (document.getElementById('waveform')) {
                 document.getElementById('waveform').style.display = 'block';
             }
-            
+
             this.updateTimeDisplay();
             this.loadCommentMarkers();
-            
+
             if (this.options.onTrackReady) {
                 this.options.onTrackReady();
             }
@@ -134,11 +129,11 @@ class AudioCommentWidget {
         this.wavesurfer.on('error', (error) => {
             console.error('WaveSurfer error:', error);
             const errorMsg = 'Failed to load audio file';
-            
+
             if (this.options.onError) {
                 this.options.onError(errorMsg);
             }
-            
+
             if (this.options.waveformPlaceholder) {
                 this.options.waveformPlaceholder.innerHTML = '<div class="error-message">Failed to load audio</div>';
             }
@@ -329,7 +324,7 @@ class AudioCommentWidget {
 
         const replies = this.allComments.filter(c => c.parent_id === commentId);
         const threadHTML = this.buildCommentThread(rootComment, replies);
-        
+
         if (this.options.commentsContainer) {
             this.options.commentsContainer.innerHTML = threadHTML;
             this.options.commentsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

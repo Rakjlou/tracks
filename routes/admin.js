@@ -90,7 +90,6 @@ router.post('/tracks', upload.single('audio'), (req, res) => {
     });
 });
 
-// Playlist routes
 router.get('/playlists', (req, res) => {
     const db = getDatabase();
 
@@ -202,7 +201,6 @@ router.post('/playlists/:id/regenerate-uuid', (req, res) => {
     });
 });
 
-// Playlist tracks management
 router.get('/playlists/:id/tracks', (req, res) => {
     const { id } = req.params;
 
@@ -273,7 +271,6 @@ router.delete('/playlists/:id/tracks/:trackId', (req, res) => {
     });
 });
 
-// Credential management routes
 router.post('/tracks/:id/credentials', (req, res) => {
     const { id } = req.params;
     const { username, password } = req.body;

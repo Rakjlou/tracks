@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sound Review - Admin</title>
+    <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
@@ -51,6 +52,173 @@
         </div>
     </div>
 
+    <!-- Templates -->
+    <template id="track-table-template">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>UUID</th>
+                    <th>Filename</th>
+                    <th>Protection</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </template>
+
+    <template id="track-row-template">
+        <tr>
+            <td class="track-title"></td>
+            <td>
+                <a class="track-uuid uuid-link" target="_blank"></a>
+            </td>
+            <td class="track-filename"></td>
+            <td class="track-protection">
+                <span class="credentials-status credentials-unprotected">Loading...</span>
+            </td>
+            <td class="track-created"></td>
+            <td class="actions">
+                <button class="edit-btn">Edit</button>
+                <button class="delete-btn btn-danger">Delete</button>
+            </td>
+        </tr>
+    </template>
+
+    <template id="playlist-table-template">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>UUID</th>
+                    <th>Tracks</th>
+                    <th>Protection</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </template>
+
+    <template id="playlist-row-template">
+        <tr>
+            <td class="playlist-title"></td>
+            <td>
+                <a class="playlist-uuid uuid-link" target="_blank"></a>
+            </td>
+            <td class="playlist-tracks"></td>
+            <td class="playlist-protection">
+                <span class="credentials-status credentials-unprotected">Loading...</span>
+            </td>
+            <td class="playlist-created"></td>
+            <td class="actions">
+                <button class="edit-btn">Edit</button>
+                <button class="delete-btn btn-danger">Delete</button>
+            </td>
+        </tr>
+    </template>
+
+    <template id="credential-item-template">
+        <div class="credential-item">
+            <span class="credential-username"></span>
+            <button class="remove-btn btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
+        </div>
+    </template>
+
+    <template id="playlist-track-item-template">
+        <div class="playlist-track-item">
+            <span class="track-title"></span>
+            <button class="remove-btn btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
+        </div>
+    </template>
+
+    <template id="track-credentials-modal-template">
+        <div class="modal-overlay">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">Manage Track Credentials</h3>
+                    <button class="modal-close">×</button>
+                </div>
+
+                <div class="form-group">
+                    <h4>Current Credentials (<span class="credential-count">0</span>)</h4>
+                    <div class="credentials-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--color-border); background: var(--color-bg); padding: 10px;">
+                        <div class="empty-state" style="color: var(--color-text-muted); font-style: italic;">No credentials set - track is public</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <h4>Add New Credential</h4>
+                    <div class="credentials-form">
+                        <input type="text" class="username-input" placeholder="Username" required>
+                        <input type="password" class="password-input" placeholder="Password" required>
+                        <button class="add-btn">Add</button>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="close-btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="edit-playlist-modal-template">
+        <div class="modal-overlay">
+            <div class="modal" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">Edit Playlist</h3>
+                    <button class="modal-close">×</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <div class="form-group">
+                            <h4>Current Tracks (<span class="tracks-count">0</span>)</h4>
+                            <div class="tracks-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--color-border); background: var(--color-bg); padding: 10px;">
+                                <div class="empty-state" style="color: var(--color-text-muted); font-style: italic;">No tracks in playlist</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <h4>Add Track</h4>
+                            <select class="track-select" style="width: 100%; padding: 10px; background: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--color-text);">
+                                <option value="">Select a track to add...</option>
+                            </select>
+                            <button class="add-track-btn" style="margin-top: 10px;">Add Track</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="form-group">
+                            <h4>Access Credentials (<span class="credentials-count">0</span>)</h4>
+                            <div class="credentials-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--color-border); background: var(--color-bg); padding: 10px;">
+                                <div class="empty-state" style="color: var(--color-text-muted); font-style: italic;">No credentials set - playlist is public</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <h4>Add New Credential</h4>
+                            <div class="credentials-form">
+                                <input type="text" class="username-input" placeholder="Username" required>
+                                <input type="password" class="password-input" placeholder="Password" required>
+                                <button class="add-credential-btn">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="close-btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="/js/utils.js"></script>
     <script src="/js/admin.js"></script>
 </body>
 </html>

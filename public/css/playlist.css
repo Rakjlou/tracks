@@ -1,15 +1,4 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body {
-    font-family: Monaco, 'Courier New', monospace;
-    font-size: 14px;
-    background-color: #000;
-    color: #fff;
-    line-height: 1.5;
     height: 100vh;
     overflow: hidden;
 }
@@ -22,12 +11,12 @@ body {
 
 .header {
     padding: 20px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
 }
 
 .playlist-info {
-    color: #666;
+    color: var(--color-text-muted);
     font-size: 12px;
     margin-top: 5px;
 }
@@ -40,8 +29,8 @@ body {
 
 .sidebar {
     width: 300px;
-    background-color: #111;
-    border-right: 1px solid #333;
+    background-color: var(--color-bg-secondary);
+    border-right: 1px solid var(--color-border);
     padding: 20px;
     overflow-y: auto;
     flex-shrink: 0;
@@ -51,7 +40,7 @@ body {
     margin-bottom: 15px;
     font-size: 16px;
     font-weight: normal;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
 }
 
@@ -63,8 +52,8 @@ body {
 
 .track-item {
     padding: 12px;
-    background-color: #000;
-    border: 1px solid #333;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -76,8 +65,8 @@ body {
 }
 
 .track-item.active {
-    background-color: #333;
-    border-color: #666;
+    background-color: var(--color-border);
+    border-color: var(--color-text-muted);
 }
 
 .track-title {
@@ -87,7 +76,7 @@ body {
 
 .track-meta {
     font-size: 11px;
-    color: #666;
+    color: var(--color-text-muted);
 }
 
 .player-area {
@@ -103,7 +92,7 @@ body {
     align-items: center;
     justify-content: center;
     flex: 1;
-    color: #666;
+    color: var(--color-text-muted);
     font-style: italic;
     text-align: center;
 }
@@ -117,7 +106,7 @@ body {
 .current-track-info {
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .current-track-info h2 {
@@ -133,9 +122,9 @@ body {
 }
 
 .play-btn {
-    background-color: #333;
+    background-color: var(--color-border);
     border: 1px solid #555;
-    color: #fff;
+    color: var(--color-text);
     font-family: inherit;
     font-size: 18px;
     width: 50px;
@@ -160,8 +149,8 @@ body {
 }
 
 .waveform-container {
-    background-color: #000;
-    border: 1px solid #333;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     height: 120px;
     margin-bottom: 20px;
@@ -174,7 +163,7 @@ body {
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #666;
+    color: var(--color-text-muted);
     font-style: italic;
     cursor: pointer;
 }
@@ -187,7 +176,7 @@ body {
 .toggle-btn {
     background-color: #222;
     border: 1px solid #444;
-    color: #fff;
+    color: var(--color-text);
     font-family: inherit;
     font-size: 12px;
     padding: 8px 16px;
@@ -202,8 +191,8 @@ body {
 
 .comments-section {
     flex: 1;
-    background-color: #111;
-    border: 1px solid #333;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     padding: 20px;
     min-height: 200px;
@@ -212,13 +201,13 @@ body {
 
 .comments-placeholder {
     text-align: center;
-    color: #666;
+    color: var(--color-text-muted);
     font-style: italic;
 }
 
 .loading {
     text-align: center;
-    color: #666;
+    color: var(--color-text-muted);
     padding: 20px;
     font-style: italic;
 }
@@ -233,7 +222,6 @@ body {
     margin: 20px 0;
 }
 
-/* Import comment styles from player.css */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -248,8 +236,8 @@ body {
 }
 
 .modal {
-    background-color: #111;
-    border: 1px solid #333;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     padding: 20px;
     width: 90%;
@@ -264,7 +252,7 @@ body {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .modal-title {
@@ -276,7 +264,7 @@ body {
 .modal-close {
     background: none;
     border: none;
-    color: #666;
+    color: var(--color-text-muted);
     font-size: 20px;
     cursor: pointer;
     padding: 0;
@@ -288,7 +276,7 @@ body {
 }
 
 .modal-close:hover {
-    color: #fff;
+    color: var(--color-text);
 }
 
 .form-group {
@@ -306,9 +294,9 @@ body {
 .form-group textarea {
     width: 100%;
     padding: 10px;
-    background-color: #000;
-    border: 1px solid #333;
-    color: #fff;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
     font-family: inherit;
     font-size: 14px;
     border-radius: 4px;
@@ -331,14 +319,14 @@ body {
     justify-content: flex-end;
     margin-top: 20px;
     padding-top: 15px;
-    border-top: 1px solid #333;
+    border-top: 1px solid var(--color-border);
 }
 
 button {
     padding: 10px 20px;
-    background-color: #333;
+    background-color: var(--color-border);
     border: 1px solid #555;
-    color: #fff;
+    color: var(--color-text);
     font-family: inherit;
     font-size: inherit;
     cursor: pointer;
@@ -378,30 +366,29 @@ button:hover {
 
 .comments-section {
     flex: 1;
-    background-color: #111;
-    border: 1px solid #333;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     padding: 20px;
     min-height: 200px;
     overflow-y: auto;
 }
 
-/* Importez les styles de commentaires manquants */
 .comments-list {
-    max-height: none; /* Pas de limite dans la playlist */
+    max-height: none;
 }
 
 .comment-thread {
-    border: 1px solid #333;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     margin-bottom: 15px;
     background-color: #0a0a0a;
 }
 
 .comment-header {
-    background-color: #111;
+    background-color: var(--color-bg-secondary);
     padding: 10px 15px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--color-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -409,12 +396,12 @@ button:hover {
 
 .comment-timestamp {
     font-weight: bold;
-    color: #fff;
+    color: var(--color-text);
 }
 
 .comment-meta {
     font-size: 12px;
-    color: #666;
+    color: var(--color-text-muted);
 }
 
 .comment-item {
@@ -433,7 +420,7 @@ button:hover {
 }
 
 .comment-content {
-    color: #fff;
+    color: var(--color-text);
     line-height: 1.4;
     margin-bottom: 10px;
     word-wrap: break-word;
@@ -441,12 +428,12 @@ button:hover {
 
 .comment-date {
     font-size: 11px;
-    color: #666;
+    color: var(--color-text-muted);
 }
 
 .comment-reply {
     margin-left: 20px;
-    border-left: 2px solid #333;
+    border-left: 2px solid var(--color-border);
     padding-left: 15px;
 }
 
@@ -468,12 +455,12 @@ button:hover {
 }
 
 .btn-small:hover {
-    background-color: #333;
+    background-color: var(--color-border);
 }
 
 .empty-comments {
     text-align: center;
-    color: #666;
+    color: var(--color-text-muted);
     font-style: italic;
     padding: 20px;
 }

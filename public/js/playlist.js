@@ -14,9 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let playlist = null;
     let currentTrack = null;
 
-    const playlistUuid = window.location.pathname.split('/playlist/')[1];
+    const playlistUuid = extractUuidFromPath('playlist');
 
-    // Initialize the reusable audio comment widget
     const audioWidget = new AudioCommentWidget({
         waveformContainer: '#waveform',
         waveformPlaceholder: waveformPlaceholder,
@@ -28,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Track ready in playlist widget');
         },
         onError: (message) => {
-            showError(message);
+            showError(message, playlistTitle, playlistInfo);
         }
     });
 
@@ -54,8 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error loading playlist:', error);
-                showError('Playlist not found or failed to load');
+                showError(handleFetchError(error, 'Playlist not found or failed to load'), playlistTitle, playlistInfo);
             });
     }
 
@@ -84,7 +82,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function selectTrack(track) {
-        // Update UI state
         document.querySelectorAll('.track-item').forEach(item => item.classList.remove('active'));
         const trackIndex = playlist.tracks.findIndex(t => t.uuid === track.uuid);
         if (trackIndex >= 0) {
@@ -94,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
         currentTrack = track;
         currentTrackTitle.textContent = track.title;
 
-        // Reset and load new track in widget
         audioWidget.loadTrack(track.uuid);
 
         // Show player
@@ -102,21 +98,4 @@ document.addEventListener('DOMContentLoaded', function() {
         playerContainer.style.display = 'flex';
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = message;
-
-        playlistTitle.textContent = 'Error';
-        playlistInfo.textContent = '';
-
-        const container = document.querySelector('.container');
-        container.insertBefore(errorDiv, container.firstChild.nextSibling);
-    }
 });

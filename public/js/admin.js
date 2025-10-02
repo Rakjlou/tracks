@@ -40,40 +40,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const table = document.createElement('table');
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>UUID</th>
-                    <th>Filename</th>
-                    <th>Protection</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${tracks.map(track => `
-                    <tr id="track-row-${track.id}">
-                        <td>${escapeHtml(track.title)}</td>
-                        <td>
-                            <a href="/track/${track.uuid}" class="uuid-link" target="_blank">
-                                ${track.uuid}
-                            </a>
-                        </td>
-                        <td>${escapeHtml(track.filename)}</td>
-                        <td id="track-protection-${track.id}">
-                            <span class="credentials-status credentials-unprotected">Loading...</span>
-                        </td>
-                        <td>${new Date(track.created_at).toLocaleString()}</td>
-                        <td class="actions">
-                            <button onclick="editTrack(${track.id})">Edit</button>
-                            <button onclick="deleteTrack(${track.id})" class="btn-danger">Delete</button>
-                        </td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        `;
+        const tableTemplate = document.getElementById('track-table-template');
+        const table = tableTemplate.content.cloneNode(true).querySelector('table');
+        const tbody = table.querySelector('tbody');
+
+        tracks.forEach(track => {
+            const rowTemplate = document.getElementById('track-row-template');
+            const row = rowTemplate.content.cloneNode(true);
+
+            row.querySelector('tr').id = `track-row-${track.id}`;
+            row.querySelector('.track-title').textContent = track.title;
+            row.querySelector('.track-uuid').textContent = track.uuid;
+            row.querySelector('.track-uuid').href = `/track/${track.uuid}`;
+            row.querySelector('.track-filename').textContent = track.filename;
+            row.querySelector('.track-protection').id = `track-protection-${track.id}`;
+            row.querySelector('.track-created').textContent = new Date(track.created_at).toLocaleString();
+
+            const editBtn = row.querySelector('.edit-btn');
+            const deleteBtn = row.querySelector('.delete-btn');
+            editBtn.onclick = () => editTrack(track.id);
+            deleteBtn.onclick = () => deleteTrack(track.id);
+
+            tbody.appendChild(row);
+        });
 
         tracksContainer.innerHTML = '';
         tracksContainer.appendChild(table);
@@ -113,12 +102,6 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.disabled = false;
             submitButton.textContent = 'Upload Track';
         });
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     function loadTrackCredentialStatus(trackId) {
@@ -181,40 +164,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const table = document.createElement('table');
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>UUID</th>
-                    <th>Tracks</th>
-                    <th>Protection</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${playlists.map(playlist => `
-                    <tr id="playlist-row-${playlist.id}">
-                        <td>${escapeHtml(playlist.title)}</td>
-                        <td>
-                            <a href="/playlist/${playlist.uuid}" class="uuid-link" target="_blank">
-                                ${playlist.uuid}
-                            </a>
-                        </td>
-                        <td>${playlist.track_count} tracks</td>
-                        <td id="playlist-protection-${playlist.id}">
-                            <span class="credentials-status credentials-unprotected">Loading...</span>
-                        </td>
-                        <td>${new Date(playlist.created_at).toLocaleString()}</td>
-                        <td class="actions">
-                            <button onclick="editPlaylist(${playlist.id})">Edit</button>
-                            <button onclick="deletePlaylist(${playlist.id})" class="btn-danger">Delete</button>
-                        </td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        `;
+        const tableTemplate = document.getElementById('playlist-table-template');
+        const table = tableTemplate.content.cloneNode(true).querySelector('table');
+        const tbody = table.querySelector('tbody');
+
+        playlists.forEach(playlist => {
+            const rowTemplate = document.getElementById('playlist-row-template');
+            const row = rowTemplate.content.cloneNode(true);
+
+            row.querySelector('tr').id = `playlist-row-${playlist.id}`;
+            row.querySelector('.playlist-title').textContent = playlist.title;
+            row.querySelector('.playlist-uuid').textContent = playlist.uuid;
+            row.querySelector('.playlist-uuid').href = `/playlist/${playlist.uuid}`;
+            row.querySelector('.playlist-tracks').textContent = `${playlist.track_count} tracks`;
+            row.querySelector('.playlist-protection').id = `playlist-protection-${playlist.id}`;
+            row.querySelector('.playlist-created').textContent = new Date(playlist.created_at).toLocaleString();
+
+            const editBtn = row.querySelector('.edit-btn');
+            const deleteBtn = row.querySelector('.delete-btn');
+            editBtn.onclick = () => editPlaylist(playlist.id);
+            deleteBtn.onclick = () => deletePlaylist(playlist.id);
+
+            tbody.appendChild(row);
+        });
 
         playlistsContainer.innerHTML = '';
         playlistsContainer.appendChild(table);
@@ -265,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.editPlaylist = function(playlistId) {
-        // Load playlist, tracks, and credentials data
         Promise.all([
             fetch(`/admin/playlists/${playlistId}/tracks`),
             fetch('/admin/tracks'),
@@ -304,46 +275,38 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function showTrackCredentialsModal(trackId, credentials) {
-        const modalHTML = `
-            <div class="modal-overlay" id="trackCredentialsModal">
-                <div class="modal" style="max-width: 500px;">
-                    <div class="modal-header">
-                        <h3 class="modal-title">Manage Track Credentials</h3>
-                        <button class="modal-close" onclick="closeTrackCredentialsModal()">×</button>
-                    </div>
+        const template = document.getElementById('track-credentials-modal-template');
+        const modal = template.content.cloneNode(true);
 
-                    <div class="form-group">
-                        <h4>Current Credentials (${credentials.length})</h4>
-                        <div id="currentCredentials" style="max-height: 200px; overflow-y: auto; border: 1px solid #333; background: #000; padding: 10px;">
-                            ${credentials.length === 0 ?
-                                '<div style="color: #666; font-style: italic;">No credentials set - track is public</div>' :
-                                credentials.map(cred => `
-                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #222;">
-                                        <span>${escapeHtml(cred.username)}</span>
-                                        <button onclick="removeCredential(${cred.id}, ${trackId}, 'track')" class="btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
-                                    </div>
-                                `).join('')
-                            }
-                        </div>
-                    </div>
+        modal.querySelector('.modal-overlay').id = 'trackCredentialsModal';
+        modal.querySelector('.credential-count').textContent = credentials.length;
 
-                    <div class="form-group">
-                        <h4>Add New Credential</h4>
-                        <div class="credentials-form">
-                            <input type="text" id="newTrackUsername" placeholder="Username" required>
-                            <input type="password" id="newTrackPassword" placeholder="Password" required>
-                            <button onclick="addTrackCredential(${trackId})">Add</button>
-                        </div>
-                    </div>
+        const credentialsList = modal.querySelector('.credentials-list');
 
-                    <div class="modal-actions">
-                        <button onclick="closeTrackCredentialsModal()" class="btn-secondary">Close</button>
-                    </div>
-                </div>
-            </div>
-        `;
+        if (credentials.length === 0) {
+            credentialsList.innerHTML = '<div class="empty-state" style="color: var(--color-text-muted); font-style: italic;">No credentials set - track is public</div>';
+        } else {
+            credentialsList.innerHTML = '';
+            credentials.forEach(cred => {
+                const itemTemplate = document.getElementById('credential-item-template');
+                const item = itemTemplate.content.cloneNode(true);
 
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+                item.querySelector('.credential-username').textContent = cred.username;
+                item.querySelector('.remove-btn').onclick = () => removeCredential(cred.id, trackId, 'track');
+
+                credentialsList.appendChild(item);
+            });
+        }
+
+        modal.querySelector('.modal-close').onclick = closeTrackCredentialsModal;
+        modal.querySelector('.close-btn').onclick = closeTrackCredentialsModal;
+        modal.querySelector('.add-btn').onclick = () => {
+            const username = modal.querySelector('.username-input').value;
+            const password = modal.querySelector('.password-input').value;
+            addTrackCredential(trackId, username, password);
+        };
+
+        document.body.appendChild(modal);
     }
 
     function showEditPlaylistModal(playlistId, playlistTracks, allTracks, credentials) {
@@ -351,78 +314,69 @@ document.addEventListener('DOMContentLoaded', function() {
             !playlistTracks.find(pt => pt.id === track.id)
         );
 
-        const modalHTML = `
-            <div class="modal-overlay" id="editPlaylistModal">
-                <div class="modal" style="max-width: 700px;">
-                    <div class="modal-header">
-                        <h3 class="modal-title">Edit Playlist</h3>
-                        <button class="modal-close" onclick="closeEditPlaylistModal()">×</button>
-                    </div>
+        const template = document.getElementById('edit-playlist-modal-template');
+        const modal = template.content.cloneNode(true);
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div>
-                            <div class="form-group">
-                                <h4>Current Tracks (${playlistTracks.length})</h4>
-                                <div id="currentTracks" style="max-height: 200px; overflow-y: auto; border: 1px solid #333; background: #000; padding: 10px;">
-                                    ${playlistTracks.length === 0 ?
-                                        '<div style="color: #666; font-style: italic;">No tracks in playlist</div>' :
-                                        playlistTracks.map(track => `
-                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #222;">
-                                                <span>${escapeHtml(track.title)}</span>
-                                                <button onclick="removeTrackFromPlaylist(${playlistId}, ${track.id})" class="btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
-                                            </div>
-                                        `).join('')
-                                    }
-                                </div>
-                            </div>
+        modal.querySelector('.modal-overlay').id = 'editPlaylistModal';
 
-                            <div class="form-group">
-                                <h4>Add Track</h4>
-                                <select id="trackToAdd" style="width: 100%; padding: 10px; background: #111; border: 1px solid #333; color: #fff;">
-                                    <option value="">Select a track to add...</option>
-                                    ${availableTracks.map(track => `
-                                        <option value="${track.id}">${escapeHtml(track.title)}</option>
-                                    `).join('')}
-                                </select>
-                                <button onclick="addTrackToPlaylist(${playlistId})" style="margin-top: 10px;">Add Track</button>
-                            </div>
-                        </div>
+        // Populate tracks list
+        modal.querySelector('.tracks-count').textContent = playlistTracks.length;
+        const tracksList = modal.querySelector('.tracks-list');
 
-                        <div>
-                            <div class="form-group">
-                                <h4>Access Credentials (${credentials.length})</h4>
-                                <div id="currentPlaylistCredentials" style="max-height: 200px; overflow-y: auto; border: 1px solid #333; background: #000; padding: 10px;">
-                                    ${credentials.length === 0 ?
-                                        '<div style="color: #666; font-style: italic;">No credentials set - playlist is public</div>' :
-                                        credentials.map(cred => `
-                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #222;">
-                                                <span>${escapeHtml(cred.username)}</span>
-                                                <button onclick="removeCredential(${cred.id}, ${playlistId}, 'playlist')" class="btn-danger" style="padding: 4px 8px; font-size: 12px;">Remove</button>
-                                            </div>
-                                        `).join('')
-                                    }
-                                </div>
-                            </div>
+        if (playlistTracks.length === 0) {
+            tracksList.innerHTML = '<div class="empty-state" style="color: var(--color-text-muted); font-style: italic;">No tracks in playlist</div>';
+        } else {
+            tracksList.innerHTML = '';
+            playlistTracks.forEach(track => {
+                const itemTemplate = document.getElementById('playlist-track-item-template');
+                const item = itemTemplate.content.cloneNode(true);
 
-                            <div class="form-group">
-                                <h4>Add New Credential</h4>
-                                <div class="credentials-form">
-                                    <input type="text" id="newPlaylistUsername" placeholder="Username" required>
-                                    <input type="password" id="newPlaylistPassword" placeholder="Password" required>
-                                    <button onclick="addPlaylistCredential(${playlistId})">Add</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                item.querySelector('.track-title').textContent = track.title;
+                item.querySelector('.remove-btn').onclick = () => removeTrackFromPlaylist(playlistId, track.id);
 
-                    <div class="modal-actions">
-                        <button onclick="closeEditPlaylistModal()" class="btn-secondary">Close</button>
-                    </div>
-                </div>
-            </div>
-        `;
+                tracksList.appendChild(item);
+            });
+        }
 
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        // Populate available tracks select
+        const trackSelect = modal.querySelector('.track-select');
+        availableTracks.forEach(track => {
+            const option = document.createElement('option');
+            option.value = track.id;
+            option.textContent = track.title;
+            trackSelect.appendChild(option);
+        });
+
+        modal.querySelector('.add-track-btn').onclick = () => addTrackToPlaylist(playlistId, trackSelect);
+
+        // Populate credentials list
+        modal.querySelector('.credentials-count').textContent = credentials.length;
+        const credentialsList = modal.querySelector('.credentials-list');
+
+        if (credentials.length === 0) {
+            credentialsList.innerHTML = '<div class="empty-state" style="color: var(--color-text-muted); font-style: italic;">No credentials set - playlist is public</div>';
+        } else {
+            credentialsList.innerHTML = '';
+            credentials.forEach(cred => {
+                const itemTemplate = document.getElementById('credential-item-template');
+                const item = itemTemplate.content.cloneNode(true);
+
+                item.querySelector('.credential-username').textContent = cred.username;
+                item.querySelector('.remove-btn').onclick = () => removeCredential(cred.id, playlistId, 'playlist');
+
+                credentialsList.appendChild(item);
+            });
+        }
+
+        modal.querySelector('.modal-close').onclick = closeEditPlaylistModal;
+        modal.querySelector('.close-btn').onclick = closeEditPlaylistModal;
+        modal.querySelector('.add-credential-btn').onclick = () => {
+            const username = modal.querySelector('.username-input').value;
+            const password = modal.querySelector('.password-input').value;
+            addPlaylistCredential(playlistId, username, password);
+        };
+
+        document.body.appendChild(modal);
     }
 
     window.closeEditPlaylistModal = function() {
@@ -432,8 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    window.addTrackToPlaylist = function(playlistId) {
-        const trackSelect = document.getElementById('trackToAdd');
+    window.addTrackToPlaylist = function(playlistId, trackSelect) {
         const trackId = trackSelect.value;
 
         if (!trackId) {
@@ -516,10 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    window.addTrackCredential = function(trackId) {
-        const username = document.getElementById('newTrackUsername').value.trim();
-        const password = document.getElementById('newTrackPassword').value;
-
+    window.addTrackCredential = function(trackId, username, password) {
         if (!username || !password) {
             alert('Please enter both username and password');
             return;
@@ -530,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username: username.trim(), password })
         })
         .then(response => {
             if (!response.ok) {
@@ -549,10 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    window.addPlaylistCredential = function(playlistId) {
-        const username = document.getElementById('newPlaylistUsername').value.trim();
-        const password = document.getElementById('newPlaylistPassword').value;
-
+    window.addPlaylistCredential = function(playlistId, username, password) {
         if (!username || !password) {
             alert('Please enter both username and password');
             return;
@@ -563,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username: username.trim(), password })
         })
         .then(response => {
             if (!response.ok) {
