@@ -19,10 +19,7 @@ app.get('/', (req, res) => {
 app.use('/admin', adminRoutes);
 
 app.get('/admin', requireAdminAuth, (req, res) => {
-    res.json({
-        message: 'Welcome to admin area!',
-        timestamp: new Date().toISOString()
-    });
+    res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
 async function startServer() {
