@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear existing regions
         regions.clearRegions();
 
-        fetch(`/api/track/${trackUuid}/comments`)
+        return fetch(`/api/track/${trackUuid}/comments`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to load comments');
@@ -316,7 +316,99 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.showReplyForm = function(commentId) {
-        alert('Reply form coming next!');
+        const existingForm = document.getElementById('replyForm');
+        if (existingForm) {
+            existingForm.remove();
+        }
+
+        const modalHTML = `
+            <div class="modal-overlay" id="replyModal">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Reply to Comment</h3>
+                        <button class="modal-close" onclick="closeReplyModal()">×</button>
+                    </div>
+                    <form id="replyForm">
+                        <div class="form-group">
+                            <label for="replyUsername">Username:</label>
+                            <input type="text" id="replyUsername" name="username" value="anonymous" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="replyContent">Reply:</label>
+                            <textarea id="replyContent" name="content" placeholder="Enter your reply..." required></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeReplyModal()">Cancel</button>
+                            <button type="submit">Post Reply</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        const form = document.getElementById('replyForm');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitReply(commentId);
+        });
+
+        document.getElementById('replyContent').focus();
+    }
+
+    window.closeReplyModal = function() {
+        const modal = document.getElementById('replyModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    function submitReply(commentId) {
+        const username = document.getElementById('replyUsername').value.trim();
+        const content = document.getElementById('replyContent').value.trim();
+
+        if (!username || !content) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        const submitBtn = document.querySelector('#replyForm button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Posting...';
+
+        fetch(`/api/track/${trackUuid}/comments/${commentId}/reply`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: username,
+                content: content
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to post reply');
+            }
+            return response.json();
+        })
+        .then(data => {
+            closeReplyModal();
+            // Reload comments and refresh the thread display
+            loadCommentMarkers().then(() => {
+                showCommentThread(commentId);
+            });
+            alert('Reply posted successfully!');
+        })
+        .catch(error => {
+            console.error('Error posting reply:', error);
+            alert('Failed to post reply. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Post Reply';
+        });
     }
 
     window.closeThread = function(commentId) {
