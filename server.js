@@ -3,6 +3,7 @@ const path = require('path');
 const { initDatabase } = require('./database/db');
 const { createTables } = require('./database/schema');
 const { requireAdminAuth } = require('./middleware/auth');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +15,8 @@ app.use(express.static('public'));
 app.get('/', (req, res) => {
     res.send('<h1>Sound Review</h1><p>Audio comment widget server is running!</p>');
 });
+
+app.use('/admin', adminRoutes);
 
 app.get('/admin', requireAdminAuth, (req, res) => {
     res.json({
