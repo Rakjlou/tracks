@@ -90,4 +90,187 @@ router.post('/tracks', upload.single('audio'), (req, res) => {
     });
 });
 
+// Playlist routes
+router.get('/playlists', (req, res) => {
+    const db = getDatabase();
+
+    const query = `
+        SELECT p.id, p.uuid, p.title, p.created_at, p.updated_at,
+               COUNT(pt.track_id) as track_count
+        FROM playlists p
+        LEFT JOIN playlist_tracks pt ON p.id = pt.playlist_id
+        GROUP BY p.id
+        ORDER BY p.created_at DESC
+    `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ playlists: rows });
+    });
+});
+
+router.post('/playlists', (req, res) => {
+    const { title } = req.body;
+    if (!title) {
+        return res.status(400).json({ error: 'Title is required' });
+    }
+
+    const db = getDatabase();
+    const uuid = uuidv4();
+
+    const insertQuery = 'INSERT INTO playlists (uuid, title) VALUES (?, ?)';
+
+    db.run(insertQuery, [uuid, title.trim()], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to create playlist' });
+        }
+
+        res.status(201).json({
+            message: 'Playlist created successfully',
+            playlist: {
+                id: this.lastID,
+                uuid: uuid,
+                title: title.trim(),
+                track_count: 0
+            }
+        });
+    });
+});
+
+router.put('/playlists/:id', (req, res) => {
+    const { id } = req.params;
+    const { title } = req.body;
+
+    if (!title) {
+        return res.status(400).json({ error: 'Title is required' });
+    }
+
+    const db = getDatabase();
+    const updateQuery = 'UPDATE playlists SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+
+    db.run(updateQuery, [title.trim(), id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to update playlist' });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Playlist not found' });
+        }
+
+        res.json({ message: 'Playlist updated successfully' });
+    });
+});
+
+router.delete('/playlists/:id', (req, res) => {
+    const { id } = req.params;
+
+    const db = getDatabase();
+    const deleteQuery = 'DELETE FROM playlists WHERE id = ?';
+
+    db.run(deleteQuery, [id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to delete playlist' });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Playlist not found' });
+        }
+
+        res.json({ message: 'Playlist deleted successfully' });
+    });
+});
+
+router.post('/playlists/:id/regenerate-uuid', (req, res) => {
+    const { id } = req.params;
+    const newUuid = uuidv4();
+
+    const db = getDatabase();
+    const updateQuery = 'UPDATE playlists SET uuid = ? WHERE id = ?';
+
+    db.run(updateQuery, [newUuid, id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to regenerate UUID' });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Playlist not found' });
+        }
+
+        res.json({ message: 'UUID regenerated successfully', uuid: newUuid });
+    });
+});
+
+// Playlist tracks management
+router.get('/playlists/:id/tracks', (req, res) => {
+    const { id } = req.params;
+
+    const db = getDatabase();
+    const query = `
+        SELECT t.id, t.uuid, t.title, t.filename, pt.position
+        FROM playlist_tracks pt
+        JOIN tracks t ON pt.track_id = t.id
+        WHERE pt.playlist_id = ?
+        ORDER BY pt.position ASC
+    `;
+
+    db.all(query, [id], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ tracks: rows });
+    });
+});
+
+router.post('/playlists/:id/tracks', (req, res) => {
+    const { id } = req.params;
+    const { trackId } = req.body;
+
+    if (!trackId) {
+        return res.status(400).json({ error: 'Track ID is required' });
+    }
+
+    const db = getDatabase();
+
+    // Get next position
+    const positionQuery = 'SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM playlist_tracks WHERE playlist_id = ?';
+    db.get(positionQuery, [id], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        const insertQuery = 'INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)';
+        db.run(insertQuery, [id, trackId, result.next_position], function(err) {
+            if (err) {
+                if (err.code === 'SQLITE_CONSTRAINT') {
+                    return res.status(400).json({ error: 'Track already in playlist' });
+                }
+                return res.status(500).json({ error: 'Failed to add track to playlist' });
+            }
+
+            res.status(201).json({ message: 'Track added to playlist successfully' });
+        });
+    });
+});
+
+router.delete('/playlists/:id/tracks/:trackId', (req, res) => {
+    const { id, trackId } = req.params;
+
+    const db = getDatabase();
+    const deleteQuery = 'DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?';
+
+    db.run(deleteQuery, [id, trackId], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to remove track from playlist' });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Track not found in playlist' });
+        }
+
+        res.json({ message: 'Track removed from playlist successfully' });
+    });
+});
+
 module.exports = router;

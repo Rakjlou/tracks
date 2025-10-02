@@ -23,6 +23,64 @@ router.get('/track/:uuid', (req, res) => {
     });
 });
 
+router.get('/playlist/:uuid', (req, res) => {
+    const { uuid } = req.params;
+
+    const db = getDatabase();
+    const query = 'SELECT id, uuid, title FROM playlists WHERE uuid = ?';
+
+    db.get(query, [uuid], (err, playlist) => {
+        if (err) {
+            return res.status(500).send('Database error');
+        }
+
+        if (!playlist) {
+            return res.status(404).send('Playlist not found');
+        }
+
+        res.sendFile(path.join(__dirname, '..', 'views', 'playlist.html'));
+    });
+});
+
+router.get('/api/playlist/:uuid', (req, res) => {
+    const { uuid } = req.params;
+
+    const db = getDatabase();
+    const query = 'SELECT id, uuid, title, created_at FROM playlists WHERE uuid = ?';
+
+    db.get(query, [uuid], (err, playlist) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!playlist) {
+            return res.status(404).json({ error: 'Playlist not found' });
+        }
+
+        // Get tracks in playlist
+        const tracksQuery = `
+            SELECT t.id, t.uuid, t.title, t.filename, pt.position
+            FROM playlist_tracks pt
+            JOIN tracks t ON pt.track_id = t.id
+            WHERE pt.playlist_id = ?
+            ORDER BY pt.position ASC
+        `;
+
+        db.all(tracksQuery, [playlist.id], (err, tracks) => {
+            if (err) {
+                return res.status(500).json({ error: 'Database error' });
+            }
+
+            res.json({
+                playlist: {
+                    ...playlist,
+                    tracks: tracks
+                }
+            });
+        });
+    });
+});
+
 router.get('/api/track/:uuid', (req, res) => {
     const { uuid } = req.params;
 
