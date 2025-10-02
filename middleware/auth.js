@@ -27,7 +27,7 @@ function requireAdminAuth(req, res, next) {
 function requireResourceAuth(resourceType, getResourceIdFromParams) {
     return async (req, res, next) => {
         try {
-            const resourceId = getResourceIdFromParams(req);
+            const resourceId = await getResourceIdFromParams(req);
 
             if (!resourceId) {
                 return res.status(404).json({ error: 'Resource not found' });
@@ -41,13 +41,13 @@ function requireResourceAuth(resourceType, getResourceIdFromParams) {
                 WHERE resource_type = ? AND resource_id = ?
             `;
 
-            db.all(credentialsQuery, [resourceType, resourceId], (err, credentials) => {
+            db.get(credentialsQuery, [resourceType, resourceId], (err, credential) => {
                 if (err) {
                     return res.status(500).json({ error: 'Database error' });
                 }
 
-                if (credentials.length === 0) {
-                    return res.status(403).json({ error: 'Access denied' });
+                if (!credential) {
+                    return next();
                 }
 
                 const authHeader = req.headers.authorization;
@@ -61,11 +61,7 @@ function requireResourceAuth(resourceType, getResourceIdFromParams) {
                 const credString = Buffer.from(base64Credentials, 'base64').toString('ascii');
                 const [username, password] = credString.split(':');
 
-                const validCredential = credentials.find(cred =>
-                    cred.username === username && bcrypt.compareSync(password, cred.password)
-                );
-
-                if (validCredential) {
+                if (credential.username === username && bcrypt.compareSync(password, credential.password)) {
                     req.authenticatedUser = username;
                     next();
                 } else {

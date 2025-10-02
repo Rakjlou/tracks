@@ -1,10 +1,37 @@
 const express = require('express');
 const path = require('path');
 const { getDatabase } = require('../database/db');
+const { requireResourceAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/track/:uuid', (req, res) => {
+function getTrackIdFromUuid(req) {
+    const { uuid } = req.params;
+    const db = getDatabase();
+
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id FROM tracks WHERE uuid = ?';
+        db.get(query, [uuid], (err, track) => {
+            if (err) reject(err);
+            else resolve(track ? track.id : null);
+        });
+    });
+}
+
+function getPlaylistIdFromUuid(req) {
+    const { uuid } = req.params;
+    const db = getDatabase();
+
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id FROM playlists WHERE uuid = ?';
+        db.get(query, [uuid], (err, playlist) => {
+            if (err) reject(err);
+            else resolve(playlist ? playlist.id : null);
+        });
+    });
+}
+
+router.get('/track/:uuid', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
     const { uuid } = req.params;
 
     const db = getDatabase();
@@ -23,7 +50,7 @@ router.get('/track/:uuid', (req, res) => {
     });
 });
 
-router.get('/playlist/:uuid', (req, res) => {
+router.get('/playlist/:uuid', requireResourceAuth('playlist', getPlaylistIdFromUuid), (req, res) => {
     const { uuid } = req.params;
 
     const db = getDatabase();
@@ -42,7 +69,7 @@ router.get('/playlist/:uuid', (req, res) => {
     });
 });
 
-router.get('/api/playlist/:uuid', (req, res) => {
+router.get('/api/playlist/:uuid', requireResourceAuth('playlist', getPlaylistIdFromUuid), (req, res) => {
     const { uuid } = req.params;
 
     const db = getDatabase();
@@ -81,7 +108,7 @@ router.get('/api/playlist/:uuid', (req, res) => {
     });
 });
 
-router.get('/api/track/:uuid', (req, res) => {
+router.get('/api/track/:uuid', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
     const { uuid } = req.params;
 
     const db = getDatabase();
@@ -104,7 +131,7 @@ router.get('/api/track/:uuid', (req, res) => {
     });
 });
 
-router.get('/api/track/:uuid/audio', (req, res) => {
+router.get('/api/track/:uuid/audio', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
     const { uuid } = req.params;
 
     const db = getDatabase();
@@ -124,7 +151,7 @@ router.get('/api/track/:uuid/audio', (req, res) => {
     });
 });
 
-router.get('/api/track/:uuid/comments', (req, res) => {
+router.get('/api/track/:uuid/comments', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
     const { uuid } = req.params;
 
     const db = getDatabase();
@@ -156,7 +183,7 @@ router.get('/api/track/:uuid/comments', (req, res) => {
     });
 });
 
-router.post('/api/track/:uuid/comments', (req, res) => {
+router.post('/api/track/:uuid/comments', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
     const { uuid } = req.params;
     const { timestamp, username, content } = req.body;
 
@@ -201,7 +228,7 @@ router.post('/api/track/:uuid/comments', (req, res) => {
     });
 });
 
-router.post('/api/track/:uuid/comments/:commentId/reply', (req, res) => {
+router.post('/api/track/:uuid/comments/:commentId/reply', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
     const { uuid, commentId } = req.params;
     const { username, content } = req.body;
 
@@ -261,7 +288,7 @@ router.post('/api/track/:uuid/comments/:commentId/reply', (req, res) => {
     });
 });
 
-router.put('/api/track/:uuid/comments/:commentId/close', (req, res) => {
+router.put('/api/track/:uuid/comments/:commentId/close', requireResourceAuth('track', getTrackIdFromUuid), (req, res) => {
     const { uuid, commentId } = req.params;
 
     const db = getDatabase();

@@ -217,3 +217,38 @@ button:active {
     padding-top: 15px;
     border-top: 1px solid #333;
 }
+
+.credentials-status {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    margin-left: 10px;
+}
+
+.credentials-protected {
+    background-color: #050;
+    color: #0f0;
+}
+
+.credentials-unprotected {
+    background-color: #500;
+    color: #f88;
+}
+
+.credentials-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    align-items: flex-end;
+}
+
+.credentials-form input[type="text"],
+.credentials-form input[type="password"] {
+    flex: 1;
+    min-width: 120px;
+}
+
+.credentials-form button {
+    padding: 8px 12px;
+    font-size: 12px;
+}

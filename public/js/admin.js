@@ -47,13 +47,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <th>Title</th>
                     <th>UUID</th>
                     <th>Filename</th>
+                    <th>Protection</th>
                     <th>Created</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 ${tracks.map(track => `
-                    <tr>
+                    <tr id="track-row-${track.id}">
                         <td>${escapeHtml(track.title)}</td>
                         <td>
                             <a href="/track/${track.uuid}" class="uuid-link" target="_blank">
@@ -61,6 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             </a>
                         </td>
                         <td>${escapeHtml(track.filename)}</td>
+                        <td id="track-protection-${track.id}">
+                            <span class="credentials-status credentials-unprotected">Loading...</span>
+                        </td>
                         <td>${new Date(track.created_at).toLocaleString()}</td>
                         <td class="actions">
                             <button onclick="editTrack(${track.id})">Edit</button>
@@ -73,6 +77,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tracksContainer.innerHTML = '';
         tracksContainer.appendChild(table);
+
+        tracks.forEach(track => {
+            loadTrackCredentialStatus(track.id);
+        });
     }
 
     function uploadTrack() {
@@ -113,8 +121,100 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
+    function loadTrackCredentialStatus(trackId) {
+        fetch(`/admin/tracks/${trackId}/credentials`)
+            .then(response => response.json())
+            .then(data => {
+                const statusCell = document.getElementById(`track-protection-${trackId}`);
+                if (data.hasCredentials) {
+                    statusCell.innerHTML = `
+                        <span class="credentials-status credentials-protected">Protected (${escapeHtml(data.username)})</span>
+                        <button onclick="removeTrackCredentials(${trackId})" class="btn-danger" style="padding: 2px 6px; font-size: 11px; margin-left: 5px;">Remove</button>
+                    `;
+                } else {
+                    statusCell.innerHTML = `
+                        <span class="credentials-status credentials-unprotected">Public</span>
+                        <button onclick="showTrackCredentialsForm(${trackId})" style="padding: 2px 6px; font-size: 11px; margin-left: 5px;">Protect</button>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading credential status:', error);
+                const statusCell = document.getElementById(`track-protection-${trackId}`);
+                statusCell.innerHTML = '<span class="credentials-status credentials-unprotected">Error</span>';
+            });
+    }
+
+    window.showTrackCredentialsForm = function(trackId) {
+        const statusCell = document.getElementById(`track-protection-${trackId}`);
+        statusCell.innerHTML = `
+            <div class="credentials-form">
+                <input type="text" id="track-username-${trackId}" placeholder="Username" required>
+                <input type="password" id="track-password-${trackId}" placeholder="Password" required>
+                <button onclick="setTrackCredentials(${trackId})">Set</button>
+                <button onclick="loadTrackCredentialStatus(${trackId})" class="btn-secondary">Cancel</button>
+            </div>
+        `;
+    };
+
+    window.setTrackCredentials = function(trackId) {
+        const username = document.getElementById(`track-username-${trackId}`).value.trim();
+        const password = document.getElementById(`track-password-${trackId}`).value;
+
+        if (!username || !password) {
+            alert('Please enter both username and password');
+            return;
+        }
+
+        fetch(`/admin/tracks/${trackId}/credentials`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to set credentials');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('Track protection set successfully!');
+            loadTrackCredentialStatus(trackId);
+        })
+        .catch(error => {
+            console.error('Error setting credentials:', error);
+            alert('Error setting credentials. Please try again.');
+        });
+    };
+
+    window.removeTrackCredentials = function(trackId) {
+        if (!confirm('Are you sure you want to remove protection from this track?')) {
+            return;
+        }
+
+        fetch(`/admin/tracks/${trackId}/credentials`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to remove credentials');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('Track protection removed successfully!');
+            loadTrackCredentialStatus(trackId);
+        })
+        .catch(error => {
+            console.error('Error removing credentials:', error);
+            alert('Error removing credentials. Please try again.');
+        });
+    };
+
     window.editTrack = function(trackId) {
-        alert('Edit functionality coming soon!');
+        alert('Edit track title functionality coming soon!');
     };
 
     window.deleteTrack = function(trackId) {
@@ -153,13 +253,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <th>Title</th>
                     <th>UUID</th>
                     <th>Tracks</th>
+                    <th>Protection</th>
                     <th>Created</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 ${playlists.map(playlist => `
-                    <tr>
+                    <tr id="playlist-row-${playlist.id}">
                         <td>${escapeHtml(playlist.title)}</td>
                         <td>
                             <a href="/playlist/${playlist.uuid}" class="uuid-link" target="_blank">
@@ -167,6 +268,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             </a>
                         </td>
                         <td>${playlist.track_count} tracks</td>
+                        <td id="playlist-protection-${playlist.id}">
+                            <span class="credentials-status credentials-unprotected">Loading...</span>
+                        </td>
                         <td>${new Date(playlist.created_at).toLocaleString()}</td>
                         <td class="actions">
                             <button onclick="editPlaylist(${playlist.id})">Edit</button>
@@ -179,6 +283,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         playlistsContainer.innerHTML = '';
         playlistsContainer.appendChild(table);
+
+        playlists.forEach(playlist => {
+            loadPlaylistCredentialStatus(playlist.id);
+        });
     }
 
     function createPlaylist() {
@@ -370,6 +478,98 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error removing track:', error);
             alert('Error removing track from playlist');
+        });
+    };
+
+    function loadPlaylistCredentialStatus(playlistId) {
+        fetch(`/admin/playlists/${playlistId}/credentials`)
+            .then(response => response.json())
+            .then(data => {
+                const statusCell = document.getElementById(`playlist-protection-${playlistId}`);
+                if (data.hasCredentials) {
+                    statusCell.innerHTML = `
+                        <span class="credentials-status credentials-protected">Protected (${escapeHtml(data.username)})</span>
+                        <button onclick="removePlaylistCredentials(${playlistId})" class="btn-danger" style="padding: 2px 6px; font-size: 11px; margin-left: 5px;">Remove</button>
+                    `;
+                } else {
+                    statusCell.innerHTML = `
+                        <span class="credentials-status credentials-unprotected">Public</span>
+                        <button onclick="showPlaylistCredentialsForm(${playlistId})" style="padding: 2px 6px; font-size: 11px; margin-left: 5px;">Protect</button>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading credential status:', error);
+                const statusCell = document.getElementById(`playlist-protection-${playlistId}`);
+                statusCell.innerHTML = '<span class="credentials-status credentials-unprotected">Error</span>';
+            });
+    }
+
+    window.showPlaylistCredentialsForm = function(playlistId) {
+        const statusCell = document.getElementById(`playlist-protection-${playlistId}`);
+        statusCell.innerHTML = `
+            <div class="credentials-form">
+                <input type="text" id="playlist-username-${playlistId}" placeholder="Username" required>
+                <input type="password" id="playlist-password-${playlistId}" placeholder="Password" required>
+                <button onclick="setPlaylistCredentials(${playlistId})">Set</button>
+                <button onclick="loadPlaylistCredentialStatus(${playlistId})" class="btn-secondary">Cancel</button>
+            </div>
+        `;
+    };
+
+    window.setPlaylistCredentials = function(playlistId) {
+        const username = document.getElementById(`playlist-username-${playlistId}`).value.trim();
+        const password = document.getElementById(`playlist-password-${playlistId}`).value;
+
+        if (!username || !password) {
+            alert('Please enter both username and password');
+            return;
+        }
+
+        fetch(`/admin/playlists/${playlistId}/credentials`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to set credentials');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('Playlist protection set successfully!');
+            loadPlaylistCredentialStatus(playlistId);
+        })
+        .catch(error => {
+            console.error('Error setting credentials:', error);
+            alert('Error setting credentials. Please try again.');
+        });
+    };
+
+    window.removePlaylistCredentials = function(playlistId) {
+        if (!confirm('Are you sure you want to remove protection from this playlist?')) {
+            return;
+        }
+
+        fetch(`/admin/playlists/${playlistId}/credentials`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to remove credentials');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('Playlist protection removed successfully!');
+            loadPlaylistCredentialStatus(playlistId);
+        })
+        .catch(error => {
+            console.error('Error removing credentials:', error);
+            alert('Error removing credentials. Please try again.');
         });
     };
 });

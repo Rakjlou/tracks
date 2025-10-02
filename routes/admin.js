@@ -273,4 +273,139 @@ router.delete('/playlists/:id/tracks/:trackId', (req, res) => {
     });
 });
 
+// Credential management routes
+router.post('/tracks/:id/credentials', (req, res) => {
+    const { id } = req.params;
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    const db = getDatabase();
+    const bcrypt = require('bcrypt');
+
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to hash password' });
+        }
+
+        const deleteQuery = 'DELETE FROM credentials WHERE resource_type = ? AND resource_id = ?';
+        const insertQuery = 'INSERT INTO credentials (resource_type, resource_id, username, password) VALUES (?, ?, ?, ?)';
+
+        db.run(deleteQuery, ['track', id], function(err) {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ error: 'Failed to save credentials' });
+            }
+
+            db.run(insertQuery, ['track', id, username.trim(), hashedPassword], function(err) {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: 'Failed to save credentials' });
+                }
+
+                res.json({ message: 'Track credentials set successfully' });
+            });
+        });
+    });
+});
+
+router.post('/playlists/:id/credentials', (req, res) => {
+    const { id } = req.params;
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    const db = getDatabase();
+    const bcrypt = require('bcrypt');
+
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to hash password' });
+        }
+
+        const deleteQuery = 'DELETE FROM credentials WHERE resource_type = ? AND resource_id = ?';
+        const insertQuery = 'INSERT INTO credentials (resource_type, resource_id, username, password) VALUES (?, ?, ?, ?)';
+
+        db.run(deleteQuery, ['playlist', id], function(err) {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ error: 'Failed to save credentials' });
+            }
+
+            db.run(insertQuery, ['playlist', id, username.trim(), hashedPassword], function(err) {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: 'Failed to save credentials' });
+                }
+
+                res.json({ message: 'Playlist credentials set successfully' });
+            });
+        });
+    });
+});
+
+router.delete('/tracks/:id/credentials', (req, res) => {
+    const { id } = req.params;
+
+    const db = getDatabase();
+    const deleteQuery = 'DELETE FROM credentials WHERE resource_type = ? AND resource_id = ?';
+
+    db.run(deleteQuery, ['track', id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to remove credentials' });
+        }
+
+        res.json({ message: 'Track credentials removed successfully' });
+    });
+});
+
+router.delete('/playlists/:id/credentials', (req, res) => {
+    const { id } = req.params;
+
+    const db = getDatabase();
+    const deleteQuery = 'DELETE FROM credentials WHERE resource_type = ? AND resource_id = ?';
+
+    db.run(deleteQuery, ['playlist', id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to remove credentials' });
+        }
+
+        res.json({ message: 'Playlist credentials removed successfully' });
+    });
+});
+
+router.get('/tracks/:id/credentials', (req, res) => {
+    const { id } = req.params;
+
+    const db = getDatabase();
+    const query = 'SELECT username FROM credentials WHERE resource_type = ? AND resource_id = ?';
+
+    db.get(query, ['track', id], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        res.json({ hasCredentials: !!row, username: row ? row.username : null });
+    });
+});
+
+router.get('/playlists/:id/credentials', (req, res) => {
+    const { id } = req.params;
+
+    const db = getDatabase();
+    const query = 'SELECT username FROM credentials WHERE resource_type = ? AND resource_id = ?';
+
+    db.get(query, ['playlist', id], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        res.json({ hasCredentials: !!row, username: row ? row.username : null });
+    });
+});
+
 module.exports = router;
