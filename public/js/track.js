@@ -4,12 +4,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const playBtn = document.getElementById('playBtn');
     const timeDisplay = document.getElementById('timeDisplay');
     const waveformContainer = document.getElementById('waveformContainer');
+    const waveformPlaceholder = document.getElementById('waveformPlaceholder');
     const commentsToggle = document.getElementById('commentsToggle');
     const commentsContainer = document.getElementById('commentsContainer');
 
     let currentTrack = null;
-    let audioElement = null;
+    let wavesurfer = null;
+    let regions = null;
     let isPlaying = false;
+    let showClosedComments = false;
 
     const trackUuid = window.location.pathname.split('/track/')[1];
 
@@ -17,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     playBtn.addEventListener('click', togglePlayPause);
     commentsToggle.addEventListener('click', toggleClosedComments);
-    waveformContainer.addEventListener('click', initializeAudio);
+    waveformPlaceholder.addEventListener('click', initializeWaveform);
 
     function loadTrackData() {
         fetch(`/api/track/${trackUuid}`)
@@ -42,50 +45,74 @@ document.addEventListener('DOMContentLoaded', function() {
         trackInfo.textContent = `UUID: ${currentTrack.uuid} • Created: ${new Date(currentTrack.created_at).toLocaleDateString()}`;
     }
 
-    function initializeAudio() {
-        if (audioElement) return;
+    function initializeWaveform() {
+        if (wavesurfer) return;
 
-        waveformContainer.innerHTML = '<div class="loading">Loading audio...</div>';
+        waveformPlaceholder.innerHTML = '<div class="loading">Loading waveform...</div>';
 
-        audioElement = new Audio(`/api/track/${trackUuid}/audio`);
-        
-        audioElement.addEventListener('loadedmetadata', function() {
-            playBtn.disabled = false;
-            updateTimeDisplay();
-            waveformContainer.innerHTML = '<div class="waveform-placeholder" style="background: #111;">Simple waveform placeholder - WaveSurfer.js integration coming next!</div>';
+        regions = WaveSurfer.Regions.create();
+
+        wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: '#666',
+            progressColor: '#fff',
+            cursorColor: '#fff',
+            barWidth: 2,
+            barRadius: 3,
+            responsive: true,
+            height: 120,
+            normalize: true,
+            plugins: [regions]
         });
 
-        audioElement.addEventListener('timeupdate', updateTimeDisplay);
-        
-        audioElement.addEventListener('ended', function() {
+        wavesurfer.load(`/api/track/${trackUuid}/audio`);
+
+        wavesurfer.on('ready', function() {
+            playBtn.disabled = false;
+            waveformPlaceholder.style.display = 'none';
+            document.getElementById('waveform').style.display = 'block';
+            updateTimeDisplay();
+            loadCommentMarkers();
+        });
+
+        wavesurfer.on('audioprocess', updateTimeDisplay);
+        wavesurfer.on('seek', updateTimeDisplay);
+
+        wavesurfer.on('finish', function() {
             isPlaying = false;
             playBtn.textContent = '▶';
         });
 
-        audioElement.addEventListener('error', function() {
+        wavesurfer.on('error', function(error) {
+            console.error('WaveSurfer error:', error);
             showError('Failed to load audio file');
-            waveformContainer.innerHTML = '<div class="error-message">Failed to load audio</div>';
+            waveformPlaceholder.innerHTML = '<div class="error-message">Failed to load audio</div>';
+        });
+
+        wavesurfer.on('click', function(progress, event) {
+            const clickTime = progress * wavesurfer.getDuration();
+            showCommentModal(clickTime);
         });
     }
 
     function togglePlayPause() {
-        if (!audioElement) return;
+        if (!wavesurfer) return;
 
         if (isPlaying) {
-            audioElement.pause();
+            wavesurfer.pause();
             playBtn.textContent = '▶';
         } else {
-            audioElement.play();
+            wavesurfer.play();
             playBtn.textContent = '⏸';
         }
         isPlaying = !isPlaying;
     }
 
     function updateTimeDisplay() {
-        if (!audioElement) return;
+        if (!wavesurfer) return;
 
-        const current = formatTime(audioElement.currentTime);
-        const duration = formatTime(audioElement.duration || 0);
+        const current = formatTime(wavesurfer.getCurrentTime());
+        const duration = formatTime(wavesurfer.getDuration() || 0);
         timeDisplay.textContent = `${current} / ${duration}`;
     }
 
@@ -95,23 +122,51 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
+    function loadCommentMarkers() {
+        // Placeholder - will load actual comments from API
+        console.log('Loading comment markers...');
+
+        // Demo: Add a sample comment marker at 30 seconds
+        if (wavesurfer.getDuration() > 30) {
+            regions.addRegion({
+                start: 30,
+                end: 30.1,
+                color: 'rgba(255, 0, 0, 0.3)',
+                drag: false,
+                resize: false
+            });
+        }
+    }
+
+    function showCommentModal(timestamp) {
+        const minutes = Math.floor(timestamp / 60);
+        const seconds = Math.floor(timestamp % 60);
+        const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        alert(`Add comment at ${timeStr}\n\nComment modal coming next!`);
+    }
+
     function toggleClosedComments() {
-        // Placeholder for closed comments toggle
-        if (commentsToggle.textContent.includes('Show')) {
+        showClosedComments = !showClosedComments;
+
+        if (showClosedComments) {
             commentsToggle.textContent = 'Hide Closed Comments';
         } else {
             commentsToggle.textContent = 'Show Closed Comments';
         }
+
+        // TODO: Update marker visibility
+        console.log('Toggled closed comments:', showClosedComments);
     }
 
     function showError(message) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.textContent = message;
-        
+
         trackTitle.textContent = 'Error';
         trackInfo.textContent = '';
-        
+
         const container = document.querySelector('.container');
         container.insertBefore(errorDiv, container.firstChild.nextSibling);
     }

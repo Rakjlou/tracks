@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sound Review - Track</title>
     <link rel="stylesheet" href="/css/player.css">
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -20,9 +22,10 @@
             </div>
 
             <div class="waveform-container" id="waveformContainer">
-                <div class="waveform-placeholder">
+                <div class="waveform-placeholder" id="waveformPlaceholder">
                     Click here to load waveform and enable audio playback
                 </div>
+                <div id="waveform" style="display: none;"></div>
             </div>
 
             <div class="comments-toggle">

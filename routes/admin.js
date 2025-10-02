@@ -39,13 +39,13 @@ router.use(requireAdminAuth);
 
 router.get('/tracks', (req, res) => {
     const db = getDatabase();
-    
+
     const query = `
-        SELECT id, uuid, filename, title, duration, created_at, updated_at 
-        FROM tracks 
+        SELECT id, uuid, filename, title, duration, created_at, updated_at
+        FROM tracks
         ORDER BY created_at DESC
     `;
-    
+
     db.all(query, [], (err, rows) => {
         if (err) {
             return res.status(500).json({ error: 'Database error' });
@@ -58,26 +58,26 @@ router.post('/tracks', upload.single('audio'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No audio file provided' });
     }
-    
+
     const { title } = req.body;
     if (!title) {
         return res.status(400).json({ error: 'Title is required' });
     }
-    
+
     const db = getDatabase();
     const uuid = req.uploadUuid;
     const filename = req.file.filename;
-    
+
     const insertQuery = `
-        INSERT INTO tracks (uuid, filename, title) 
+        INSERT INTO tracks (uuid, filename, title)
         VALUES (?, ?, ?)
     `;
-    
+
     db.run(insertQuery, [uuid, filename, title], function(err) {
         if (err) {
             return res.status(500).json({ error: 'Failed to save track' });
         }
-        
+
         res.status(201).json({
             message: 'Track uploaded successfully',
             track: {

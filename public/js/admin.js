@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `).join('')}
             </tbody>
         `;
-        
+
         tracksContainer.innerHTML = '';
         tracksContainer.appendChild(table);
     }
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function uploadTrack() {
         const formData = new FormData(uploadForm);
         const submitButton = uploadForm.querySelector('button[type="submit"]');
-        
+
         submitButton.disabled = true;
         submitButton.textContent = 'Uploading...';
 
