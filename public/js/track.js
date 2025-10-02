@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let regions = null;
     let isPlaying = false;
     let showClosedComments = false;
+    let allComments = [];
 
     const trackUuid = window.location.pathname.split('/track/')[1];
 
@@ -93,6 +94,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const clickTime = progress * wavesurfer.getDuration();
             showCommentModal(clickTime);
         });
+
+        regions.on('region-clicked', function(region, event) {
+            event.stopPropagation();
+            if (region.commentId) {
+                showCommentThread(region.commentId);
+            }
+        });
     }
 
     function togglePlayPause() {
@@ -136,18 +144,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
+                allComments = data.comments;
                 const rootComments = data.comments.filter(comment => !comment.parent_id);
 
                 rootComments.forEach(comment => {
                     if (!comment.is_closed || showClosedComments) {
-                        regions.addRegion({
+                        const region = regions.addRegion({
                             start: comment.timestamp,
-                            end: comment.timestamp + 0.1,
+                            end: comment.timestamp + 1,
                             color: comment.is_closed ? 'rgba(128, 128, 128, 1)' : 'rgba(255, 0, 0, 1)',
                             drag: false,
                             resize: false,
                             data: { commentId: comment.id }
                         });
+
+                        region.commentId = comment.id;
                     }
                 });
 
@@ -249,6 +260,67 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Post Comment';
         });
+    }
+
+    function showCommentThread(commentId) {
+        const rootComment = allComments.find(c => c.id === commentId);
+        if (!rootComment) {
+            console.error('Comment not found:', commentId);
+            return;
+        }
+
+        const replies = allComments.filter(c => c.parent_id === commentId);
+
+        const threadHTML = buildCommentThread(rootComment, replies);
+        commentsContainer.innerHTML = threadHTML;
+
+        // Scroll to comments section
+        commentsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function buildCommentThread(rootComment, replies) {
+        const timestamp = formatTime(rootComment.timestamp);
+
+        return `
+            <div class="comments-list">
+                <div class="comment-thread">
+                    <div class="comment-header">
+                        <span class="comment-timestamp">Comments at ${timestamp}</span>
+                        <span class="comment-meta">${replies.length + 1} comment${replies.length !== 0 ? 's' : ''}</span>
+                    </div>
+                    <div class="comment-item">
+                        <div class="comment-author">@${escapeHtml(rootComment.username)}</div>
+                        <div class="comment-content">${escapeHtml(rootComment.content)}</div>
+                        <div class="comment-date">${new Date(rootComment.created_at).toLocaleString()}</div>
+                        <div class="comment-actions">
+                            <button class="btn-small" onclick="showReplyForm(${rootComment.id})">Reply</button>
+                            ${!rootComment.is_closed ? `<button class="btn-small" onclick="closeThread(${rootComment.id})">Close Thread</button>` : ''}
+                        </div>
+                    </div>
+                    ${replies.map(reply => `
+                        <div class="comment-item comment-reply">
+                            <div class="comment-author">@${escapeHtml(reply.username)}</div>
+                            <div class="comment-content">${escapeHtml(reply.content)}</div>
+                            <div class="comment-date">${new Date(reply.created_at).toLocaleString()}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    window.showReplyForm = function(commentId) {
+        alert('Reply form coming next!');
+    }
+
+    window.closeThread = function(commentId) {
+        alert('Close thread functionality coming next!');
     }
 
     function toggleClosedComments() {
