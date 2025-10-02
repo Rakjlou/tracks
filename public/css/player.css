@@ -373,3 +373,28 @@ body {
         flex-direction: column;
     }
 }
+
+.modal-actions button {
+    padding: 10px 20px;
+    background-color: #333;
+    border: 1px solid #555;
+    color: #fff;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-radius: 4px;
+}
+
+.modal-actions button:hover {
+    background-color: #555;
+}
+
+.modal-actions .btn-secondary {
+    background-color: #222;
+    border-color: #444;
+}
+
+.modal-actions .btn-secondary:hover {
+    background-color: #444;
+}
