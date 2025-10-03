@@ -273,8 +273,9 @@ class AudioCommentWidget {
         // Set timestamp
         timestampSpan.textContent = timeStr;
 
-        // Reset form
-        usernameInput.value = 'anonymous';
+        // Reset form - use saved username from localStorage or default to 'anonymous'
+        const savedUsername = localStorage.getItem('commentUsername') || 'anonymous';
+        usernameInput.value = savedUsername;
         contentTextarea.value = '';
 
         // Show form with animation
@@ -378,6 +379,9 @@ class AudioCommentWidget {
             return;
         }
 
+        // Save username to localStorage for future use
+        localStorage.setItem('commentUsername', username);
+
         const submitBtn = document.querySelector('#commentForm button[type="submit"]');
         submitBtn.disabled = true;
         submitBtn.textContent = 'Posting...';
@@ -470,6 +474,9 @@ class AudioCommentWidget {
             existingForm.remove();
         }
 
+        // Get saved username from localStorage or default to 'anonymous'
+        const savedUsername = localStorage.getItem('commentUsername') || 'anonymous';
+
         const modalHTML = `
             <div class="modal-overlay" id="replyModal">
                 <div class="modal">
@@ -480,7 +487,7 @@ class AudioCommentWidget {
                     <form id="replyForm">
                         <div class="form-group">
                             <label for="replyUsername">Username:</label>
-                            <input type="text" id="replyUsername" name="username" value="anonymous" required>
+                            <input type="text" id="replyUsername" name="username" value="${this.escapeHtml(savedUsername)}" required>
                         </div>
                         <div class="form-group">
                             <label for="replyContent">Reply:</label>
@@ -521,6 +528,9 @@ class AudioCommentWidget {
             alert('Please fill in all fields');
             return;
         }
+
+        // Save username to localStorage for future use
+        localStorage.setItem('commentUsername', username);
 
         const submitBtn = document.querySelector('#replyForm button[type="submit"]');
         submitBtn.disabled = true;
