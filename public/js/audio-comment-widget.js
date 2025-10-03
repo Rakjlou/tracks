@@ -227,46 +227,81 @@ class AudioCommentWidget {
         const seconds = Math.floor(timestamp % 60);
         const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-        const modalHTML = `
-            <div class="modal-overlay" id="commentModal">
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3 class="modal-title">Add Comment at ${timeStr}</h3>
-                        <button class="modal-close" onclick="window.audioWidget.closeCommentModal()">×</button>
-                    </div>
-                    <form id="commentForm">
-                        <div class="form-group">
-                            <label for="commentUsername">Username:</label>
-                            <input type="text" id="commentUsername" name="username" value="anonymous" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="commentContent">Comment:</label>
-                            <textarea id="commentContent" name="content" placeholder="Enter your comment..." required></textarea>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="window.audioWidget.closeCommentModal()">Cancel</button>
-                            <button type="submit">Post Comment</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
+        // Show the inline form
+        const inlineForm = document.getElementById('inlineCommentForm');
+        const timestampSpan = document.getElementById('commentTimestamp');
+        const usernameInput = document.getElementById('commentUsername');
+        const contentTextarea = document.getElementById('commentContent');
         const form = document.getElementById('commentForm');
-        form.addEventListener('submit', (e) => {
+
+        if (!inlineForm) return;
+
+        // Set timestamp
+        timestampSpan.textContent = timeStr;
+
+        // Reset form
+        usernameInput.value = 'anonymous';
+        contentTextarea.value = '';
+
+        // Show form with animation
+        inlineForm.style.display = 'block';
+
+        // Setup event handlers
+        const cancelBtn1 = document.getElementById('cancelCommentBtn');
+        const cancelBtn2 = document.getElementById('cancelCommentBtn2');
+
+        const closeHandler = () => this.closeCommentModal();
+        cancelBtn1.onclick = closeHandler;
+        cancelBtn2.onclick = closeHandler;
+
+        // Remove old submit handler and add new one
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+
+        newForm.addEventListener('submit', (e) => {
             e.preventDefault();
             this.submitComment(timestamp);
         });
 
-        document.getElementById('commentContent').focus();
+        // Click outside to close
+        this.setupOutsideClickHandler(inlineForm);
+
+        // Focus on textarea
+        contentTextarea.focus();
+
+        // Scroll to form
+        inlineForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    setupOutsideClickHandler(formElement) {
+        // Remove any existing handler
+        if (this.outsideClickHandler) {
+            document.removeEventListener('click', this.outsideClickHandler);
+        }
+
+        // Create new handler
+        this.outsideClickHandler = (event) => {
+            if (!formElement.contains(event.target)) {
+                this.closeCommentModal();
+            }
+        };
+
+        // Add handler after a small delay to avoid immediate closure from the click that opened it
+        setTimeout(() => {
+            document.addEventListener('click', this.outsideClickHandler);
+        }, 100);
     }
 
     closeCommentModal() {
-        const modal = document.getElementById('commentModal');
-        if (modal) {
-            modal.remove();
+        const inlineForm = document.getElementById('inlineCommentForm');
+        if (inlineForm) {
+            inlineForm.style.display = 'none';
+        }
+
+        // Remove outside click handler
+        if (this.outsideClickHandler) {
+            document.removeEventListener('click', this.outsideClickHandler);
+            this.outsideClickHandler = null;
         }
     }
 
