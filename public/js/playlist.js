@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentTrackTitle = document.getElementById('currentTrackTitle');
     const playBtn = document.getElementById('playBtn');
     const timeDisplay = document.getElementById('timeDisplay');
-    const waveformPlaceholder = document.getElementById('waveformPlaceholder');
     const commentsToggle = document.getElementById('commentsToggle');
     const commentsContainer = document.getElementById('commentsContainer');
 
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const audioWidget = new AudioCommentWidget({
         waveformContainer: '#waveform',
-        waveformPlaceholder: waveformPlaceholder,
         playButton: playBtn,
         timeDisplay: timeDisplay,
         commentsContainer: commentsContainer,

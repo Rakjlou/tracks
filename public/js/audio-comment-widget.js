@@ -2,7 +2,6 @@ class AudioCommentWidget {
     constructor(options) {
         this.options = {
             waveformContainer: '#waveform',
-            waveformPlaceholder: null,
             playButton: null,
             timeDisplay: null,
             commentsContainer: null,
@@ -32,23 +31,18 @@ class AudioCommentWidget {
         if (this.options.commentsToggle) {
             this.options.commentsToggle.addEventListener('click', () => this.toggleClosedComments());
         }
-
-        if (this.options.waveformPlaceholder) {
-            this.options.waveformPlaceholder.addEventListener('click', () => this.initializeWaveform());
-        }
     }
 
     loadTrack(trackUuid) {
         this.currentTrackUuid = trackUuid;
         this.resetPlayer();
 
-        if (this.options.waveformPlaceholder) {
-            this.options.waveformPlaceholder.style.display = 'block';
+        if (this.options.commentsContainer) {
+            this.options.commentsContainer.innerHTML = '<div class="comments-placeholder">Loading comments...</div>';
         }
 
-        if (this.options.commentsContainer) {
-            this.options.commentsContainer.innerHTML = '<div class="comments-placeholder">No comments yet. Click on the waveform to add a comment!</div>';
-        }
+        // Automatically initialize waveform
+        this.initializeWaveform();
     }
 
     resetPlayer() {
@@ -68,17 +62,10 @@ class AudioCommentWidget {
             this.options.timeDisplay.textContent = '00:00 / 00:00';
         }
 
-        if (document.getElementById('waveform')) {
-            document.getElementById('waveform').style.display = 'none';
-        }
     }
 
     initializeWaveform() {
         if (this.wavesurfer || !this.currentTrackUuid) return;
-
-        if (this.options.waveformPlaceholder) {
-            this.options.waveformPlaceholder.innerHTML = '<div class="loading">Loading waveform...</div>';
-        }
 
         this.regions = WaveSurfer.Regions.create();
 
@@ -100,14 +87,6 @@ class AudioCommentWidget {
         this.wavesurfer.on('ready', () => {
             if (this.options.playButton) {
                 this.options.playButton.disabled = false;
-            }
-
-            if (this.options.waveformPlaceholder) {
-                this.options.waveformPlaceholder.style.display = 'none';
-            }
-
-            if (document.getElementById('waveform')) {
-                document.getElementById('waveform').style.display = 'block';
             }
 
             this.updateTimeDisplay();
@@ -134,10 +113,6 @@ class AudioCommentWidget {
 
             if (this.options.onError) {
                 this.options.onError(errorMsg);
-            }
-
-            if (this.options.waveformPlaceholder) {
-                this.options.waveformPlaceholder.innerHTML = '<div class="error-message">Failed to load audio</div>';
             }
         });
 

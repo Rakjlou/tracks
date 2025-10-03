@@ -76,15 +76,6 @@ body {
     overflow: hidden;
 }
 
-.waveform-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--color-text-muted);
-    font-style: italic;
-}
-
 .comments-toggle {
     text-align: center;
     margin-bottom: 20px;
