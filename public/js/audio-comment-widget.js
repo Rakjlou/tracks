@@ -177,6 +177,7 @@ class AudioCommentWidget {
                 this.allComments = data.comments;
                 const rootComments = data.comments.filter(comment => !comment.parent_id);
 
+                // Add markers to waveform
                 rootComments.forEach(comment => {
                     if (!comment.is_closed || this.showClosedComments) {
                         const region = this.regions.addRegion({
@@ -192,11 +193,67 @@ class AudioCommentWidget {
                     }
                 });
 
+                // Display all comments in collapsed view
+                this.displayAllComments();
+
                 console.log(`Loaded ${rootComments.length} comment markers`);
             })
             .catch(error => {
                 console.error('Error loading comments:', error);
+                if (this.options.commentsContainer) {
+                    this.options.commentsContainer.innerHTML = '<div class="error-message">Failed to load comments</div>';
+                }
             });
+    }
+
+    displayAllComments() {
+        if (!this.options.commentsContainer) return;
+
+        // Filter comments based on showClosedComments flag
+        const rootComments = this.allComments.filter(c => !c.parent_id && (!c.is_closed || this.showClosedComments));
+
+        if (rootComments.length === 0) {
+            const message = this.showClosedComments
+                ? 'No comments yet. Click on the waveform to add a comment!'
+                : 'No open comments. Toggle "Show Closed Comments" to see all comments.';
+            this.options.commentsContainer.innerHTML = `<div class="comments-placeholder">${message}</div>`;
+            return;
+        }
+
+        const commentsHTML = rootComments.map(comment => {
+            const replies = this.allComments.filter(c => c.parent_id === comment.id);
+            const replyCount = replies.length;
+            const preview = comment.content.length > 50 ? comment.content.substring(0, 50) + '...' : comment.content;
+            const timestamp = this.formatTime(comment.timestamp);
+            const closedBadge = comment.is_closed ? '<span class="closed-badge">Closed</span>' : '';
+
+            return `
+                <div class="comment-summary ${comment.is_closed ? 'comment-closed' : ''}" data-comment-id="${comment.id}">
+                    <div class="comment-summary-header">
+                        <span class="comment-summary-time">${timestamp} ${closedBadge}</span>
+                        <span class="comment-summary-meta">@${this.escapeHtml(comment.username)} • ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}</span>
+                    </div>
+                    <div class="comment-summary-preview">${this.escapeHtml(preview)}</div>
+                    <div class="comment-summary-actions">
+                        <button class="btn-small goto-btn" onclick="window.audioWidget.seekToComment(${comment.id})">Goto</button>
+                        <button class="btn-small open-btn" onclick="window.audioWidget.expandCommentThread(${comment.id})">Open</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        this.options.commentsContainer.innerHTML = `<div class="comments-list">${commentsHTML}</div>`;
+    }
+
+    seekToComment(commentId) {
+        const comment = this.allComments.find(c => c.id === commentId);
+        if (comment && this.wavesurfer) {
+            this.wavesurfer.seekTo(comment.timestamp / this.wavesurfer.getDuration());
+        }
+    }
+
+    expandCommentThread(commentId) {
+        this.showCommentThread(commentId);
     }
 
     showCommentModal(timestamp) {
@@ -345,7 +402,7 @@ class AudioCommentWidget {
         .then(data => {
             this.removePreviewRegion(); // Remove preview before reloading markers
             this.closeCommentModal();
-            this.loadCommentMarkers();
+            this.loadCommentMarkers(); // This will reload and display all comments
             alert('Comment posted successfully!');
         })
         .catch(error => {
@@ -369,7 +426,9 @@ class AudioCommentWidget {
         const threadHTML = this.buildCommentThread(rootComment, replies);
 
         if (this.options.commentsContainer) {
-            this.options.commentsContainer.innerHTML = threadHTML;
+            // Add back button to return to list view
+            const backButton = '<button class="btn-secondary" onclick="window.audioWidget.displayAllComments()" style="margin-bottom: 15px;">← Back to all comments</button>';
+            this.options.commentsContainer.innerHTML = backButton + threadHTML;
             this.options.commentsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
@@ -486,7 +545,7 @@ class AudioCommentWidget {
         .then(data => {
             this.closeReplyModal();
             this.loadCommentMarkers().then(() => {
-                this.showCommentThread(commentId);
+                this.showCommentThread(commentId); // Stay on expanded thread after reply
             });
             alert('Reply posted successfully!');
         })
@@ -522,9 +581,7 @@ class AudioCommentWidget {
             return response.json();
         })
         .then(data => {
-            this.loadCommentMarkers().then(() => {
-                this.showCommentThread(commentId);
-            });
+            this.loadCommentMarkers(); // Return to list view after closing
             alert('Thread closed successfully!');
         })
         .catch(error => {
@@ -546,6 +603,7 @@ class AudioCommentWidget {
             }
         }
 
+        // Reload markers and refresh comment list
         this.loadCommentMarkers();
         console.log('Toggled closed comments:', this.showClosedComments);
     }
