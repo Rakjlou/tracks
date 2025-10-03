@@ -18,6 +18,8 @@ class AudioCommentWidget {
         this.showClosedComments = false;
         this.allComments = [];
         this.currentTrackUuid = null;
+        this.previewRegion = null;
+        this.outsideClickHandler = null;
 
         this.bindEvents();
     }
@@ -246,6 +248,9 @@ class AudioCommentWidget {
         // Show form with animation
         inlineForm.style.display = 'block';
 
+        // Add temporary preview region on waveform
+        this.addPreviewRegion(timestamp);
+
         // Setup event handlers
         const cancelBtn1 = document.getElementById('cancelCommentBtn');
         const cancelBtn2 = document.getElementById('cancelCommentBtn2');
@@ -273,6 +278,30 @@ class AudioCommentWidget {
         inlineForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
+    addPreviewRegion(timestamp) {
+        // Remove any existing preview region
+        this.removePreviewRegion();
+
+        // Create temporary preview region with distinct styling
+        if (this.regions) {
+            this.previewRegion = this.regions.addRegion({
+                start: timestamp,
+                end: timestamp + 1,
+                color: 'rgba(255, 255, 0, 0.6)', // Yellow, semi-transparent
+                drag: false,
+                resize: false,
+                data: { isPreview: true }
+            });
+        }
+    }
+
+    removePreviewRegion() {
+        if (this.previewRegion) {
+            this.previewRegion.remove();
+            this.previewRegion = null;
+        }
+    }
+
     setupOutsideClickHandler(formElement) {
         // Remove any existing handler
         if (this.outsideClickHandler) {
@@ -297,6 +326,9 @@ class AudioCommentWidget {
         if (inlineForm) {
             inlineForm.style.display = 'none';
         }
+
+        // Remove preview region from waveform
+        this.removePreviewRegion();
 
         // Remove outside click handler
         if (this.outsideClickHandler) {
@@ -336,6 +368,7 @@ class AudioCommentWidget {
             return response.json();
         })
         .then(data => {
+            this.removePreviewRegion(); // Remove preview before reloading markers
             this.closeCommentModal();
             this.loadCommentMarkers();
             alert('Comment posted successfully!');
