@@ -296,9 +296,13 @@ class AudioCommentWidget {
 
                 replies.forEach(reply => {
                     const replyEl = replyTemplate.content.cloneNode(true);
+
+                    const replyMetaEl = replyEl.querySelector('.comment-meta');
+                    replyMetaEl.title = new Date(reply.created_at).toLocaleString();
+
                     replyEl.querySelector('.comment-author').textContent = `@${reply.username}`;
                     replyEl.querySelector('.comment-content').textContent = reply.content;
-                    replyEl.querySelector('.comment-date').textContent = new Date(reply.created_at).toLocaleString();
+
                     repliesContainer.appendChild(replyEl);
                 });
             }
@@ -492,59 +496,6 @@ class AudioCommentWidget {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Post Comment';
         });
-    }
-
-    showCommentThread(commentId) {
-        const rootComment = this.allComments.find(c => c.id === commentId);
-        if (!rootComment) {
-            console.error('Comment not found:', commentId);
-            return;
-        }
-
-        const replies = this.allComments.filter(c => c.parent_id === commentId);
-        const threadElement = this.buildCommentThread(rootComment, replies);
-
-        if (this.options.commentsContainer) {
-            this.options.commentsContainer.innerHTML = '';
-            this.options.commentsContainer.appendChild(threadElement);
-            this.options.commentsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    buildCommentThread(rootComment, replies) {
-        const timestamp = this.formatTime(rootComment.timestamp);
-        const template = document.getElementById('comment-thread-template');
-        const threadEl = template.content.cloneNode(true);
-
-        threadEl.querySelector('.comment-timestamp').textContent = `Comments at ${timestamp}`;
-        threadEl.querySelector('.comment-meta').textContent = `${replies.length + 1} comment${replies.length !== 0 ? 's' : ''}`;
-
-        threadEl.querySelector('.comment-author').textContent = `@${rootComment.username}`;
-        threadEl.querySelector('.comment-content').textContent = rootComment.content;
-        threadEl.querySelector('.comment-date').textContent = new Date(rootComment.created_at).toLocaleString();
-
-        const replyBtn = threadEl.querySelector('.reply-btn');
-        const closeThreadBtn = threadEl.querySelector('.close-thread-btn');
-
-        replyBtn.dataset.commentId = rootComment.id;
-
-        if (!rootComment.is_closed) {
-            closeThreadBtn.classList.remove('hidden');
-            closeThreadBtn.dataset.commentId = rootComment.id;
-        }
-
-        const repliesContainer = threadEl.querySelector('.replies-container');
-        const replyTemplate = document.getElementById('comment-reply-template');
-
-        replies.forEach(reply => {
-            const replyEl = replyTemplate.content.cloneNode(true);
-            replyEl.querySelector('.comment-author').textContent = `@${reply.username}`;
-            replyEl.querySelector('.comment-content').textContent = reply.content;
-            replyEl.querySelector('.comment-date').textContent = new Date(reply.created_at).toLocaleString();
-            repliesContainer.appendChild(replyEl);
-        });
-
-        return threadEl;
     }
 
     showReplyForm(commentId) {

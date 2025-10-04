@@ -1,0 +1,50 @@
+/* Track Page Specific Styles */
+
+body {
+    padding: var(--spacing-medium);
+}
+
+.container {
+    max-width: 800px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.track-title {
+    font-size: 24px;
+    font-weight: normal;
+    margin-bottom: 10px;
+}
+
+.track-info {
+    color: var(--color-text-muted);
+    font-size: 12px;
+}
+
+.player-container {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+
+    .modal {
+        width: 95%;
+        margin: 10px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+}

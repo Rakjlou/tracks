@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="/css/audio-comment-widget.css">
+
 <div class="controls">
     <button class="play-btn" id="playBtn" disabled>▶</button>
     <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
@@ -86,8 +88,9 @@
 
 <template id="comment-reply-template">
     <div class="comment-item comment-reply">
-        <div class="comment-author"></div>
+        <div class="comment-meta">
+            <span class="comment-author"></span>
+        </div>
         <div class="comment-content"></div>
-        <div class="comment-date"></div>
     </div>
 </template>
