@@ -3,9 +3,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const tracksContainer = document.getElementById('tracksContainer');
     const playlistForm = document.getElementById('playlistForm');
     const playlistsContainer = document.getElementById('playlistsContainer');
+    const audioFileInput = document.getElementById('audio');
+    const titleInput = document.getElementById('title');
 
     loadTracks();
     loadPlaylists();
+
+    audioFileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0 && !titleInput.value.trim()) {
+            const filename = e.target.files[0].name;
+            const titleFromFile = filename.replace(/\.[^/.]+$/, '');
+            titleInput.value = titleFromFile;
+        }
+    });
 
     uploadForm.addEventListener('submit', function(e) {
         e.preventDefault();
