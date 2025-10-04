@@ -231,7 +231,6 @@ router.post('/playlists/:id/tracks', (req, res) => {
 
     const db = getDatabase();
 
-    // Get next position
     const positionQuery = 'SELECT COALESCE(MAX(position), 0) + 1 as next_position FROM playlist_tracks WHERE playlist_id = ?';
     db.get(positionQuery, [id], (err, result) => {
         if (err) {

@@ -11,7 +11,6 @@ function requireResourceAuth(resourceType, getResourceIdFromParams) {
                 return res.status(404).json({ error: 'Resource not found' });
             }
 
-            // Store resourceId for potential reuse by fetchResource
             req.resourceId = resourceId;
 
             const db = getDatabase();
@@ -73,7 +72,6 @@ function fetchResource(resourceType) {
 
             req.resource = resource;
 
-            // Also store resourceId if not already set by requireResourceAuth
             if (!req.resourceId) {
                 req.resourceId = resource.id;
             }

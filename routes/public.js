@@ -25,7 +25,6 @@ router.get('/api/playlist/:uuid', requireResourceAuth('playlist', getResourceIdF
     const playlist = req.resource;
     const db = getDatabase();
 
-    // Get tracks in playlist
     const tracksQuery = `
         SELECT t.id, t.uuid, t.title, t.filename, pt.position
         FROM playlist_tracks pt

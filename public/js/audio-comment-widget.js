@@ -41,7 +41,6 @@ class AudioCommentWidget {
             this.options.commentsContainer.innerHTML = '<div class="comments-placeholder">Loading comments...</div>';
         }
 
-        // Automatically initialize waveform
         this.initializeWaveform();
     }
 
@@ -177,12 +176,10 @@ class AudioCommentWidget {
                 this.allComments = data.comments;
                 const rootComments = data.comments.filter(comment => !comment.parent_id);
 
-                // Add markers to waveform
                 rootComments.forEach(comment => {
                     if (!comment.is_closed || this.showClosedComments) {
                         const region = this.regions.addRegion({
                             start: comment.timestamp,
-                            end: comment.timestamp + 1,
                             color: comment.is_closed ? 'rgba(128, 128, 128, 1)' : 'rgba(255, 0, 0, 1)',
                             drag: false,
                             resize: false,
@@ -193,7 +190,6 @@ class AudioCommentWidget {
                     }
                 });
 
-                // Display all comments in collapsed view
                 this.displayAllComments();
 
                 console.log(`Loaded ${rootComments.length} comment markers`);
@@ -209,7 +205,6 @@ class AudioCommentWidget {
     displayAllComments() {
         if (!this.options.commentsContainer) return;
 
-        // Filter comments based on showClosedComments flag
         const rootComments = this.allComments.filter(c => !c.parent_id && (!c.is_closed || this.showClosedComments));
 
         if (rootComments.length === 0) {
@@ -261,7 +256,6 @@ class AudioCommentWidget {
         const seconds = Math.floor(timestamp % 60);
         const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-        // Show the inline form
         const inlineForm = document.getElementById('inlineCommentForm');
         const timestampSpan = document.getElementById('commentTimestamp');
         const usernameInput = document.getElementById('commentUsername');
@@ -270,21 +264,16 @@ class AudioCommentWidget {
 
         if (!inlineForm) return;
 
-        // Set timestamp
         timestampSpan.textContent = timeStr;
 
-        // Reset form - use saved username from localStorage or default to 'anonymous'
         const savedUsername = localStorage.getItem('commentUsername') || 'anonymous';
         usernameInput.value = savedUsername;
         contentTextarea.value = '';
 
-        // Show form with animation
         inlineForm.style.display = 'block';
 
-        // Add temporary preview region on waveform
         this.addPreviewRegion(timestamp);
 
-        // Setup event handlers
         const cancelBtn1 = document.getElementById('cancelCommentBtn');
         const cancelBtn2 = document.getElementById('cancelCommentBtn2');
 
@@ -292,7 +281,6 @@ class AudioCommentWidget {
         cancelBtn1.onclick = closeHandler;
         cancelBtn2.onclick = closeHandler;
 
-        // Remove old submit handler and add new one
         const newForm = form.cloneNode(true);
         form.parentNode.replaceChild(newForm, form);
 
@@ -301,26 +289,20 @@ class AudioCommentWidget {
             this.submitComment(timestamp);
         });
 
-        // Click outside to close
         this.setupOutsideClickHandler(inlineForm);
 
-        // Focus on textarea
         contentTextarea.focus();
 
-        // Scroll to form
         inlineForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     addPreviewRegion(timestamp) {
-        // Remove any existing preview region
         this.removePreviewRegion();
 
-        // Create temporary preview region with distinct styling
         if (this.regions) {
             this.previewRegion = this.regions.addRegion({
                 start: timestamp,
-                end: timestamp + 1,
-                color: 'rgba(255, 255, 0, 0.6)', // Yellow, semi-transparent
+                color: 'rgba(255, 255, 0, 0.6)',
                 drag: false,
                 resize: false,
                 data: { isPreview: true }
@@ -336,19 +318,16 @@ class AudioCommentWidget {
     }
 
     setupOutsideClickHandler(formElement) {
-        // Remove any existing handler
         if (this.outsideClickHandler) {
             document.removeEventListener('click', this.outsideClickHandler);
         }
 
-        // Create new handler
         this.outsideClickHandler = (event) => {
             if (!formElement.contains(event.target)) {
                 this.closeCommentModal();
             }
         };
 
-        // Add handler after a small delay to avoid immediate closure from the click that opened it
         setTimeout(() => {
             document.addEventListener('click', this.outsideClickHandler);
         }, 100);
@@ -360,10 +339,8 @@ class AudioCommentWidget {
             inlineForm.style.display = 'none';
         }
 
-        // Remove preview region from waveform
         this.removePreviewRegion();
 
-        // Remove outside click handler
         if (this.outsideClickHandler) {
             document.removeEventListener('click', this.outsideClickHandler);
             this.outsideClickHandler = null;
@@ -379,7 +356,6 @@ class AudioCommentWidget {
             return;
         }
 
-        // Save username to localStorage for future use
         localStorage.setItem('commentUsername', username);
 
         const submitBtn = document.querySelector('#commentForm button[type="submit"]');
@@ -404,9 +380,9 @@ class AudioCommentWidget {
             return response.json();
         })
         .then(data => {
-            this.removePreviewRegion(); // Remove preview before reloading markers
+            this.removePreviewRegion();
             this.closeCommentModal();
-            this.loadCommentMarkers(); // This will reload and display all comments
+            this.loadCommentMarkers();
             alert('Comment posted successfully!');
         })
         .catch(error => {
@@ -430,7 +406,6 @@ class AudioCommentWidget {
         const threadHTML = this.buildCommentThread(rootComment, replies);
 
         if (this.options.commentsContainer) {
-            // Add back button to return to list view
             const backButton = '<button class="btn-secondary" onclick="window.audioWidget.displayAllComments()" style="margin-bottom: 15px;">← Back to all comments</button>';
             this.options.commentsContainer.innerHTML = backButton + threadHTML;
             this.options.commentsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -474,7 +449,6 @@ class AudioCommentWidget {
             existingForm.remove();
         }
 
-        // Get saved username from localStorage or default to 'anonymous'
         const savedUsername = localStorage.getItem('commentUsername') || 'anonymous';
 
         const modalHTML = `
@@ -529,7 +503,6 @@ class AudioCommentWidget {
             return;
         }
 
-        // Save username to localStorage for future use
         localStorage.setItem('commentUsername', username);
 
         const submitBtn = document.querySelector('#replyForm button[type="submit"]');
@@ -555,7 +528,7 @@ class AudioCommentWidget {
         .then(data => {
             this.closeReplyModal();
             this.loadCommentMarkers().then(() => {
-                this.showCommentThread(commentId); // Stay on expanded thread after reply
+                this.showCommentThread(commentId);
             });
             alert('Reply posted successfully!');
         })
@@ -591,7 +564,7 @@ class AudioCommentWidget {
             return response.json();
         })
         .then(data => {
-            this.loadCommentMarkers(); // Return to list view after closing
+            this.loadCommentMarkers();
             alert('Thread closed successfully!');
         })
         .catch(error => {
@@ -613,7 +586,6 @@ class AudioCommentWidget {
             }
         }
 
-        // Reload markers and refresh comment list
         this.loadCommentMarkers();
         console.log('Toggled closed comments:', this.showClosedComments);
     }

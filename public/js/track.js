@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Make widget globally accessible for modal callbacks
     window.audioWidget = audioWidget;
 
     loadTrackData();

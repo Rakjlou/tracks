@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Make widget globally accessible for modal callbacks
     window.audioWidget = audioWidget;
 
     loadPlaylistData();
@@ -91,7 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         audioWidget.loadTrack(track.uuid);
 
-        // Show player
         noTrackSelected.style.display = 'none';
         playerContainer.style.display = 'flex';
     }

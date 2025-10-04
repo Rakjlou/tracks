@@ -319,7 +319,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         modal.querySelector('.modal-overlay').id = 'editPlaylistModal';
 
-        // Populate tracks list
         modal.querySelector('.tracks-count').textContent = playlistTracks.length;
         const tracksList = modal.querySelector('.tracks-list');
 
@@ -338,7 +337,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Populate available tracks select
         const trackSelect = modal.querySelector('.track-select');
         availableTracks.forEach(track => {
             const option = document.createElement('option');
@@ -349,7 +347,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         modal.querySelector('.add-track-btn').onclick = () => addTrackToPlaylist(playlistId, trackSelect);
 
-        // Populate credentials list
         modal.querySelector('.credentials-count').textContent = credentials.length;
         const credentialsList = modal.querySelector('.credentials-list');
 
@@ -410,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             alert('Track added successfully!');
             closeEditPlaylistModal();
-            loadPlaylists(); // Refresh the playlist table
+            loadPlaylists();
         })
         .catch(error => {
             console.error('Error adding track:', error);
@@ -435,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             alert('Track removed successfully!');
             closeEditPlaylistModal();
-            loadPlaylists(); // Refresh the playlist table
+            loadPlaylists();
         })
         .catch(error => {
             console.error('Error removing track:', error);
