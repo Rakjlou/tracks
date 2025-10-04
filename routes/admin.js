@@ -90,6 +90,40 @@ router.post('/tracks', upload.single('audio'), (req, res) => {
     });
 });
 
+router.delete('/tracks/:id', (req, res) => {
+    const { id } = req.params;
+
+    const db = getDatabase();
+    const fs = require('fs');
+
+    const selectQuery = 'SELECT filename FROM tracks WHERE id = ?';
+    db.get(selectQuery, [id], (err, track) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!track) {
+            return res.status(404).json({ error: 'Track not found' });
+        }
+
+        const deleteQuery = 'DELETE FROM tracks WHERE id = ?';
+        db.run(deleteQuery, [id], function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to delete track' });
+            }
+
+            const audioPath = path.join(__dirname, '..', 'public', 'uploads', 'audio', track.filename);
+            fs.unlink(audioPath, (err) => {
+                if (err) {
+                    console.error('Failed to delete audio file:', err);
+                }
+            });
+
+            res.json({ message: 'Track deleted successfully' });
+        });
+    });
+});
+
 router.get('/playlists', (req, res) => {
     const db = getDatabase();
 

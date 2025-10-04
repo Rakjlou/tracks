@@ -13,7 +13,16 @@ function initDatabase() {
                 reject(err);
             } else {
                 console.log('Connected to SQLite database');
-                resolve(db);
+
+                db.run('PRAGMA foreign_keys = ON', (err) => {
+                    if (err) {
+                        console.error('Error enabling foreign keys:', err);
+                        reject(err);
+                    } else {
+                        console.log('Foreign key constraints enabled');
+                        resolve(db);
+                    }
+                });
             }
         });
     });

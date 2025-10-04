@@ -136,8 +136,24 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.deleteTrack = function(trackId) {
-        if (confirm('Are you sure you want to delete this track?')) {
-            alert('Delete functionality coming soon!');
+        if (confirm('Are you sure you want to delete this track? This will also delete all associated comments and remove it from all playlists.')) {
+            fetch(`/admin/tracks/${trackId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to delete track');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Track deleted successfully!');
+                loadTracks();
+            })
+            .catch(error => {
+                console.error('Error deleting track:', error);
+                alert('Error deleting track. Please try again.');
+            });
         }
     };
 
