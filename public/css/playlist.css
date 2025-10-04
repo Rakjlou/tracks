@@ -414,6 +414,7 @@ button:hover {
     line-height: 1.4;
     margin-bottom: 10px;
     word-wrap: break-word;
+    padding-left: 8px;
 }
 
 .comment-date {

@@ -35,8 +35,8 @@
 
 <div class="comments-section">
     <h3 class="mb-15">Comments</h3>
-    <div class="comments-placeholder" id="commentsContainer">
-        No comments yet. Click on the waveform to add a comment!
+    <div id="commentsContainer">
+        <div class="comments-placeholder">No comments yet. Click on the waveform to add a comment!</div>
     </div>
 </div>
 
@@ -65,39 +65,22 @@
     </div>
 </template>
 
-<template id="comment-summary-template">
-    <div class="comment-summary">
-        <div class="comment-summary-header">
-            <span class="comment-summary-time"></span>
-            <span class="comment-summary-meta"></span>
-        </div>
-        <div class="comment-summary-preview"></div>
-        <div class="comment-summary-actions">
-            <button class="btn-small goto-btn">Goto</button>
-            <button class="btn-small open-btn">Open</button>
-        </div>
-    </div>
-</template>
-
-<template id="comment-thread-template">
-    <button class="btn-secondary back-to-list-btn mb-15">← Back to all comments</button>
-    <div class="comments-list">
-        <div class="comment-thread">
-            <div class="comment-header">
+<template id="comment-item-template">
+    <div class="comment-thread">
+        <div class="comment-item root-comment">
+            <div class="comment-meta">
+                <span class="comment-author"></span>
                 <span class="comment-timestamp"></span>
-                <span class="comment-meta"></span>
             </div>
-            <div class="comment-item root-comment">
-                <div class="comment-author"></div>
-                <div class="comment-content"></div>
-                <div class="comment-date"></div>
-                <div class="comment-actions">
-                    <button class="btn-small reply-btn">Reply</button>
-                    <button class="btn-small close-thread-btn hidden">Close Thread</button>
-                </div>
+            <div class="comment-content"></div>
+            <div class="comment-actions">
+                <button class="btn-small goto-btn">Goto</button>
+                <button class="btn-small toggle-replies-btn hidden"></button>
+                <button class="btn-small reply-btn">Reply</button>
+                <button class="btn-small close-thread-btn hidden">Close Thread</button>
             </div>
-            <div class="replies-container"></div>
         </div>
+        <div class="replies-container hidden"></div>
     </div>
 </template>
 

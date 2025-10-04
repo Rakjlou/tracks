@@ -38,17 +38,13 @@ class AudioCommentWidget {
                 const target = e.target;
 
                 if (target.classList.contains('goto-btn')) {
-                    const commentId = parseInt(target.closest('.comment-summary').dataset.commentId);
+                    const commentId = parseInt(target.closest('.comment-thread').dataset.commentId);
                     this.seekToComment(commentId);
                 }
 
-                if (target.classList.contains('open-btn')) {
-                    const commentId = parseInt(target.closest('.comment-summary').dataset.commentId);
-                    this.expandCommentThread(commentId);
-                }
-
-                if (target.classList.contains('back-to-list-btn')) {
-                    this.displayAllComments();
+                if (target.classList.contains('toggle-replies-btn')) {
+                    const thread = target.closest('.comment-thread');
+                    this.toggleReplies(thread);
                 }
 
                 if (target.classList.contains('reply-btn')) {
@@ -166,7 +162,7 @@ class AudioCommentWidget {
         this.regions.on('region-clicked', (region, event) => {
             event.stopPropagation();
             if (region.commentId) {
-                this.showCommentThread(region.commentId);
+                this.scrollToAndExpandComment(region.commentId);
             }
         });
     }
@@ -255,30 +251,59 @@ class AudioCommentWidget {
             return;
         }
 
-        const template = document.getElementById('comment-summary-template');
+        const template = document.getElementById('comment-item-template');
         const listContainer = document.createElement('div');
         listContainer.className = 'comments-list';
 
         rootComments.forEach(comment => {
             const replies = this.allComments.filter(c => c.parent_id === comment.id);
             const replyCount = replies.length;
-            const preview = comment.content.length > 50 ? comment.content.substring(0, 50) + '...' : comment.content;
             const timestamp = this.formatTime(comment.timestamp);
             const closedBadge = comment.is_closed ? '<span class="closed-badge">Closed</span>' : '';
 
-            const summaryEl = template.content.cloneNode(true);
-            const summaryDiv = summaryEl.querySelector('.comment-summary');
+            const commentEl = template.content.cloneNode(true);
+            const threadDiv = commentEl.querySelector('.comment-thread');
 
-            summaryDiv.dataset.commentId = comment.id;
+            threadDiv.dataset.commentId = comment.id;
             if (comment.is_closed) {
-                summaryDiv.classList.add('comment-closed');
+                threadDiv.classList.add('comment-closed');
             }
 
-            summaryEl.querySelector('.comment-summary-time').innerHTML = `${timestamp} ${closedBadge}`;
-            summaryEl.querySelector('.comment-summary-meta').textContent = `@${comment.username} • ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
-            summaryEl.querySelector('.comment-summary-preview').textContent = preview;
+            const metaEl = commentEl.querySelector('.comment-meta');
+            metaEl.title = new Date(comment.created_at).toLocaleString();
 
-            listContainer.appendChild(summaryEl);
+            commentEl.querySelector('.comment-author').textContent = `@${comment.username}`;
+            commentEl.querySelector('.comment-timestamp').innerHTML = `${timestamp} ${closedBadge}`;
+            commentEl.querySelector('.comment-content').textContent = comment.content;
+
+            const replyBtn = commentEl.querySelector('.reply-btn');
+            const closeThreadBtn = commentEl.querySelector('.close-thread-btn');
+            const toggleRepliesBtn = commentEl.querySelector('.toggle-replies-btn');
+
+            replyBtn.dataset.commentId = comment.id;
+            closeThreadBtn.dataset.commentId = comment.id;
+
+            if (!comment.is_closed) {
+                closeThreadBtn.classList.remove('hidden');
+            }
+
+            if (replyCount > 0) {
+                toggleRepliesBtn.classList.remove('hidden');
+                toggleRepliesBtn.textContent = `Show ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
+
+                const repliesContainer = commentEl.querySelector('.replies-container');
+                const replyTemplate = document.getElementById('comment-reply-template');
+
+                replies.forEach(reply => {
+                    const replyEl = replyTemplate.content.cloneNode(true);
+                    replyEl.querySelector('.comment-author').textContent = `@${reply.username}`;
+                    replyEl.querySelector('.comment-content').textContent = reply.content;
+                    replyEl.querySelector('.comment-date').textContent = new Date(reply.created_at).toLocaleString();
+                    repliesContainer.appendChild(replyEl);
+                });
+            }
+
+            listContainer.appendChild(commentEl);
         });
 
         this.options.commentsContainer.innerHTML = '';
@@ -292,8 +317,37 @@ class AudioCommentWidget {
         }
     }
 
-    expandCommentThread(commentId) {
-        this.showCommentThread(commentId);
+    toggleReplies(threadElement) {
+        const repliesContainer = threadElement.querySelector('.replies-container');
+        const toggleBtn = threadElement.querySelector('.toggle-replies-btn');
+        const isHidden = repliesContainer.classList.contains('hidden');
+
+        if (isHidden) {
+            repliesContainer.classList.remove('hidden');
+            const replyCount = repliesContainer.querySelectorAll('.comment-reply').length;
+            toggleBtn.textContent = `Hide ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
+        } else {
+            repliesContainer.classList.add('hidden');
+            const replyCount = repliesContainer.querySelectorAll('.comment-reply').length;
+            toggleBtn.textContent = `Show ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
+        }
+    }
+
+    scrollToAndExpandComment(commentId) {
+        const threadElement = this.options.commentsContainer.querySelector(`[data-comment-id="${commentId}"]`);
+        if (!threadElement) return;
+
+        const repliesContainer = threadElement.querySelector('.replies-container');
+        const toggleBtn = threadElement.querySelector('.toggle-replies-btn');
+
+        if (repliesContainer && !repliesContainer.classList.contains('hidden')) {
+            threadElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else if (toggleBtn && !toggleBtn.classList.contains('hidden')) {
+            this.toggleReplies(threadElement);
+            threadElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            threadElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     }
 
     showCommentModal(timestamp) {
@@ -563,7 +617,7 @@ class AudioCommentWidget {
         .then(data => {
             this.closeReplyModal();
             this.loadCommentMarkers().then(() => {
-                this.showCommentThread(commentId);
+                this.scrollToAndExpandComment(commentId);
             });
             alert('Reply posted successfully!');
         })
