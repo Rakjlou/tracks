@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const { initDatabase } = require('./database/db');
 const { createTables } = require('./database/schema');
-const { requireAdminAuth } = require('./middleware/auth');
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
 
@@ -23,10 +22,6 @@ app.get('/', (req, res) => {
 
 app.use('/admin', adminRoutes);
 app.use('/', publicRoutes);
-
-app.get('/admin', requireAdminAuth, (req, res) => {
-    res.render('admin');
-});
 
 async function startServer() {
     try {

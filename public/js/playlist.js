@@ -21,9 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
         timeDisplay: timeDisplay,
         commentsContainer: commentsContainer,
         commentsToggle: commentsToggle,
-        onTrackReady: () => {
-            console.log('Track ready in playlist widget');
-        },
         onError: (message) => {
             showError(message, playlistTitle, playlistInfo);
         }

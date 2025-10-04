@@ -327,8 +327,9 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.querySelector('.modal-close').onclick = closeTrackCredentialsModal;
         modal.querySelector('.close-btn').onclick = closeTrackCredentialsModal;
         modal.querySelector('.add-btn').onclick = () => {
-            const username = modal.querySelector('.username-input').value;
-            const password = modal.querySelector('.password-input').value;
+            const actualModal = document.getElementById('trackCredentialsModal');
+            const username = actualModal.querySelector('.username-input').value;
+            const password = actualModal.querySelector('.password-input').value;
             addTrackCredential(trackId, username, password);
         };
 
@@ -394,8 +395,9 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.querySelector('.modal-close').onclick = closeEditPlaylistModal;
         modal.querySelector('.close-btn').onclick = closeEditPlaylistModal;
         modal.querySelector('.add-credential-btn').onclick = () => {
-            const username = modal.querySelector('.username-input').value;
-            const password = modal.querySelector('.password-input').value;
+            const actualModal = document.getElementById('editPlaylistModal');
+            const username = actualModal.querySelector('.username-input').value;
+            const password = actualModal.querySelector('.password-input').value;
             addPlaylistCredential(playlistId, username, password);
         };
 

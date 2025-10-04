@@ -12,7 +12,7 @@
 </div>
 
 <!-- Inline comment form (hidden by default) -->
-<div class="inline-comment-form" id="inlineCommentForm" style="display: none;">
+<div class="inline-comment-form hidden" id="inlineCommentForm">
     <div class="form-header">
         <h3>Add Comment at <span id="commentTimestamp">0:00</span></h3>
         <button class="close-btn" id="cancelCommentBtn">×</button>
@@ -34,7 +34,7 @@
 </div>
 
 <div class="comments-section">
-    <h3 style="margin-bottom: 15px;">Comments</h3>
+    <h3 class="mb-15">Comments</h3>
     <div class="comments-placeholder" id="commentsContainer">
         No comments yet. Click on the waveform to add a comment!
     </div>
@@ -80,7 +80,7 @@
 </template>
 
 <template id="comment-thread-template">
-    <button class="btn-secondary back-to-list-btn" style="margin-bottom: 15px;">← Back to all comments</button>
+    <button class="btn-secondary back-to-list-btn mb-15">← Back to all comments</button>
     <div class="comments-list">
         <div class="comment-thread">
             <div class="comment-header">
@@ -93,7 +93,7 @@
                 <div class="comment-date"></div>
                 <div class="comment-actions">
                     <button class="btn-small reply-btn">Reply</button>
-                    <button class="btn-small close-thread-btn" style="display: none;">Close Thread</button>
+                    <button class="btn-small close-thread-btn hidden">Close Thread</button>
                 </div>
             </div>
             <div class="replies-container"></div>

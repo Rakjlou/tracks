@@ -205,7 +205,6 @@ class AudioCommentWidget {
     loadCommentMarkers() {
         if (!this.currentTrackUuid) return;
 
-        console.log('Loading comment markers...');
         this.regions.clearRegions();
 
         return fetch(`/api/track/${this.currentTrackUuid}/comments`)
@@ -234,8 +233,6 @@ class AudioCommentWidget {
                 });
 
                 this.displayAllComments();
-
-                console.log(`Loaded ${rootComments.length} comment markers`);
             })
             .catch(error => {
                 console.error('Error loading comments:', error);
@@ -318,7 +315,7 @@ class AudioCommentWidget {
         usernameInput.value = savedUsername;
         contentTextarea.value = '';
 
-        inlineForm.style.display = 'block';
+        inlineForm.classList.remove('hidden');
 
         this.addPreviewRegion(timestamp);
 
@@ -384,7 +381,7 @@ class AudioCommentWidget {
     closeCommentModal() {
         const inlineForm = document.getElementById('inlineCommentForm');
         if (inlineForm) {
-            inlineForm.style.display = 'none';
+            inlineForm.classList.add('hidden');
         }
 
         this.removePreviewRegion();
@@ -478,7 +475,7 @@ class AudioCommentWidget {
         replyBtn.dataset.commentId = rootComment.id;
 
         if (!rootComment.is_closed) {
-            closeThreadBtn.style.display = '';
+            closeThreadBtn.classList.remove('hidden');
             closeThreadBtn.dataset.commentId = rootComment.id;
         }
 
@@ -625,13 +622,6 @@ class AudioCommentWidget {
         }
 
         this.loadCommentMarkers();
-        console.log('Toggled closed comments:', this.showClosedComments);
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     destroy() {

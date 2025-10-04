@@ -104,3 +104,12 @@ input:focus, textarea:focus, select:focus {
 .uuid-link:hover {
     color: var(--color-text);
 }
+
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+.mb-15 {
+    margin-bottom: 15px;
+}

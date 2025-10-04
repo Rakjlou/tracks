@@ -37,6 +37,10 @@ const upload = multer({
 
 router.use(requireAdminAuth);
 
+router.get('/', (req, res) => {
+    res.render('admin');
+});
+
 router.get('/tracks', (req, res) => {
     const db = getDatabase();
 
