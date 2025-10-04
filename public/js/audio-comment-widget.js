@@ -13,6 +13,7 @@ class AudioCommentWidget {
 
         this.wavesurfer = null;
         this.regions = null;
+        this.hover = null;
         this.isPlaying = false;
         this.showClosedComments = false;
         this.allComments = [];
@@ -49,6 +50,7 @@ class AudioCommentWidget {
             this.wavesurfer.destroy();
             this.wavesurfer = null;
             this.regions = null;
+            this.hover = null;
         }
 
         this.isPlaying = false;
@@ -67,6 +69,14 @@ class AudioCommentWidget {
         if (this.wavesurfer || !this.currentTrackUuid) return;
 
         this.regions = WaveSurfer.Regions.create();
+        this.hover = WaveSurfer.Hover.create({
+            lineColor: '#fff',
+            lineWidth: 2,
+            labelBackground: '#555',
+            labelColor: '#fff',
+            labelSize: '11px',
+            labelPreferLeft: false,
+        });
 
         this.wavesurfer = WaveSurfer.create({
             container: this.options.waveformContainer,
@@ -78,7 +88,10 @@ class AudioCommentWidget {
             responsive: true,
             height: 120,
             normalize: true,
-            plugins: [this.regions]
+            plugins: [
+                this.regions,
+                this.hover
+            ]
         });
 
         this.wavesurfer.load(`/api/track/${this.currentTrackUuid}/audio`);
@@ -601,6 +614,7 @@ class AudioCommentWidget {
             this.wavesurfer.destroy();
             this.wavesurfer = null;
             this.regions = null;
+            this.hover = null;
         }
     }
 }
