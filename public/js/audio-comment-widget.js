@@ -32,6 +32,36 @@ class AudioCommentWidget {
         if (this.options.commentsToggle) {
             this.options.commentsToggle.addEventListener('click', () => this.toggleClosedComments());
         }
+
+        if (this.options.commentsContainer) {
+            this.options.commentsContainer.addEventListener('click', (e) => {
+                const target = e.target;
+
+                if (target.classList.contains('goto-btn')) {
+                    const commentId = parseInt(target.closest('.comment-summary').dataset.commentId);
+                    this.seekToComment(commentId);
+                }
+
+                if (target.classList.contains('open-btn')) {
+                    const commentId = parseInt(target.closest('.comment-summary').dataset.commentId);
+                    this.expandCommentThread(commentId);
+                }
+
+                if (target.classList.contains('back-to-list-btn')) {
+                    this.displayAllComments();
+                }
+
+                if (target.classList.contains('reply-btn')) {
+                    const commentId = parseInt(target.dataset.commentId);
+                    this.showReplyForm(commentId);
+                }
+
+                if (target.classList.contains('close-thread-btn')) {
+                    const commentId = parseInt(target.dataset.commentId);
+                    this.closeThread(commentId);
+                }
+            });
+        }
     }
 
     loadTrack(trackUuid) {
@@ -228,29 +258,34 @@ class AudioCommentWidget {
             return;
         }
 
-        const commentsHTML = rootComments.map(comment => {
+        const template = document.getElementById('comment-summary-template');
+        const listContainer = document.createElement('div');
+        listContainer.className = 'comments-list';
+
+        rootComments.forEach(comment => {
             const replies = this.allComments.filter(c => c.parent_id === comment.id);
             const replyCount = replies.length;
             const preview = comment.content.length > 50 ? comment.content.substring(0, 50) + '...' : comment.content;
             const timestamp = this.formatTime(comment.timestamp);
             const closedBadge = comment.is_closed ? '<span class="closed-badge">Closed</span>' : '';
 
-            return `
-                <div class="comment-summary ${comment.is_closed ? 'comment-closed' : ''}" data-comment-id="${comment.id}">
-                    <div class="comment-summary-header">
-                        <span class="comment-summary-time">${timestamp} ${closedBadge}</span>
-                        <span class="comment-summary-meta">@${this.escapeHtml(comment.username)} • ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}</span>
-                    </div>
-                    <div class="comment-summary-preview">${this.escapeHtml(preview)}</div>
-                    <div class="comment-summary-actions">
-                        <button class="btn-small goto-btn" onclick="window.audioWidget.seekToComment(${comment.id})">Goto</button>
-                        <button class="btn-small open-btn" onclick="window.audioWidget.expandCommentThread(${comment.id})">Open</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
+            const summaryEl = template.content.cloneNode(true);
+            const summaryDiv = summaryEl.querySelector('.comment-summary');
 
-        this.options.commentsContainer.innerHTML = `<div class="comments-list">${commentsHTML}</div>`;
+            summaryDiv.dataset.commentId = comment.id;
+            if (comment.is_closed) {
+                summaryDiv.classList.add('comment-closed');
+            }
+
+            summaryEl.querySelector('.comment-summary-time').innerHTML = `${timestamp} ${closedBadge}`;
+            summaryEl.querySelector('.comment-summary-meta').textContent = `@${comment.username} • ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
+            summaryEl.querySelector('.comment-summary-preview').textContent = preview;
+
+            listContainer.appendChild(summaryEl);
+        });
+
+        this.options.commentsContainer.innerHTML = '';
+        this.options.commentsContainer.appendChild(listContainer);
     }
 
     seekToComment(commentId) {
@@ -416,44 +451,49 @@ class AudioCommentWidget {
         }
 
         const replies = this.allComments.filter(c => c.parent_id === commentId);
-        const threadHTML = this.buildCommentThread(rootComment, replies);
+        const threadElement = this.buildCommentThread(rootComment, replies);
 
         if (this.options.commentsContainer) {
-            const backButton = '<button class="btn-secondary" onclick="window.audioWidget.displayAllComments()" style="margin-bottom: 15px;">← Back to all comments</button>';
-            this.options.commentsContainer.innerHTML = backButton + threadHTML;
+            this.options.commentsContainer.innerHTML = '';
+            this.options.commentsContainer.appendChild(threadElement);
             this.options.commentsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
 
     buildCommentThread(rootComment, replies) {
         const timestamp = this.formatTime(rootComment.timestamp);
+        const template = document.getElementById('comment-thread-template');
+        const threadEl = template.content.cloneNode(true);
 
-        return `
-            <div class="comments-list">
-                <div class="comment-thread">
-                    <div class="comment-header">
-                        <span class="comment-timestamp">Comments at ${timestamp}</span>
-                        <span class="comment-meta">${replies.length + 1} comment${replies.length !== 0 ? 's' : ''}</span>
-                    </div>
-                    <div class="comment-item">
-                        <div class="comment-author">@${this.escapeHtml(rootComment.username)}</div>
-                        <div class="comment-content">${this.escapeHtml(rootComment.content)}</div>
-                        <div class="comment-date">${new Date(rootComment.created_at).toLocaleString()}</div>
-                        <div class="comment-actions">
-                            <button class="btn-small" onclick="window.audioWidget.showReplyForm(${rootComment.id})">Reply</button>
-                            ${!rootComment.is_closed ? `<button class="btn-small" onclick="window.audioWidget.closeThread(${rootComment.id})">Close Thread</button>` : ''}
-                        </div>
-                    </div>
-                    ${replies.map(reply => `
-                        <div class="comment-item comment-reply">
-                            <div class="comment-author">@${this.escapeHtml(reply.username)}</div>
-                            <div class="comment-content">${this.escapeHtml(reply.content)}</div>
-                            <div class="comment-date">${new Date(reply.created_at).toLocaleString()}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
+        threadEl.querySelector('.comment-timestamp').textContent = `Comments at ${timestamp}`;
+        threadEl.querySelector('.comment-meta').textContent = `${replies.length + 1} comment${replies.length !== 0 ? 's' : ''}`;
+
+        threadEl.querySelector('.comment-author').textContent = `@${rootComment.username}`;
+        threadEl.querySelector('.comment-content').textContent = rootComment.content;
+        threadEl.querySelector('.comment-date').textContent = new Date(rootComment.created_at).toLocaleString();
+
+        const replyBtn = threadEl.querySelector('.reply-btn');
+        const closeThreadBtn = threadEl.querySelector('.close-thread-btn');
+
+        replyBtn.dataset.commentId = rootComment.id;
+
+        if (!rootComment.is_closed) {
+            closeThreadBtn.style.display = '';
+            closeThreadBtn.dataset.commentId = rootComment.id;
+        }
+
+        const repliesContainer = threadEl.querySelector('.replies-container');
+        const replyTemplate = document.getElementById('comment-reply-template');
+
+        replies.forEach(reply => {
+            const replyEl = replyTemplate.content.cloneNode(true);
+            replyEl.querySelector('.comment-author').textContent = `@${reply.username}`;
+            replyEl.querySelector('.comment-content').textContent = reply.content;
+            replyEl.querySelector('.comment-date').textContent = new Date(reply.created_at).toLocaleString();
+            repliesContainer.appendChild(replyEl);
+        });
+
+        return threadEl;
     }
 
     showReplyForm(commentId) {
@@ -464,38 +504,23 @@ class AudioCommentWidget {
 
         const savedUsername = localStorage.getItem('commentUsername') || 'anonymous';
 
-        const modalHTML = `
-            <div class="modal-overlay" id="replyModal">
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3 class="modal-title">Reply to Comment</h3>
-                        <button class="modal-close" onclick="window.audioWidget.closeReplyModal()">×</button>
-                    </div>
-                    <form id="replyForm">
-                        <div class="form-group">
-                            <label for="replyUsername">Username:</label>
-                            <input type="text" id="replyUsername" name="username" value="${this.escapeHtml(savedUsername)}" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="replyContent">Reply:</label>
-                            <textarea id="replyContent" name="content" placeholder="Enter your reply..." required></textarea>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="window.audioWidget.closeReplyModal()">Cancel</button>
-                            <button type="submit">Post Reply</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        `;
+        const template = document.getElementById('reply-modal-template');
+        const modal = template.content.cloneNode(true);
 
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        modal.getElementById('replyUsername').value = savedUsername;
 
-        const form = document.getElementById('replyForm');
+        const modalClose = modal.querySelector('.modal-close');
+        const cancelBtn = modal.querySelector('.cancel-reply-btn');
+        const form = modal.getElementById('replyForm');
+
+        modalClose.onclick = () => this.closeReplyModal();
+        cancelBtn.onclick = () => this.closeReplyModal();
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.submitReply(commentId);
         });
+
+        document.body.appendChild(modal);
 
         document.getElementById('replyContent').focus();
     }
@@ -619,5 +644,4 @@ class AudioCommentWidget {
     }
 }
 
-// Make widget globally accessible for modal callbacks
 window.AudioCommentWidget = AudioCommentWidget;
