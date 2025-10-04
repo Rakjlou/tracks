@@ -14,11 +14,11 @@ function getResourceIdFromUuid(resourceType) {
 }
 
 router.get('/track/:uuid', requireResourceAuth('track', getResourceIdFromUuid('track')), fetchResource('track'), (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'views', 'track.html'));
+    res.render('track');
 });
 
 router.get('/playlist/:uuid', requireResourceAuth('playlist', getResourceIdFromUuid('playlist')), fetchResource('playlist'), (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'views', 'playlist.html'));
+    res.render('playlist');
 });
 
 router.get('/api/playlist/:uuid', requireResourceAuth('playlist', getResourceIdFromUuid('playlist')), fetchResource('playlist'), (req, res) => {

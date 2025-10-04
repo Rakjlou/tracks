@@ -9,6 +9,10 @@ const publicRoutes = require('./routes/public');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configure EJS templating
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -21,7 +25,7 @@ app.use('/admin', adminRoutes);
 app.use('/', publicRoutes);
 
 app.get('/admin', requireAdminAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+    res.render('admin');
 });
 
 async function startServer() {
