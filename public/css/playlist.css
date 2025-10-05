@@ -83,7 +83,7 @@ body {
 
 .player-area {
     flex: 1;
-    padding: 20px;
+    padding: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -107,7 +107,7 @@ body {
 
 .current-track-info {
     margin-bottom: 20px;
-    padding-bottom: 15px;
+    padding: 20px 20px 15px 20px;
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -117,9 +117,16 @@ body {
 }
 
 /* Playlist-specific overrides for widget */
-.comments-section {
+.player-area .player-sticky-wrapper {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.player-area .comments-section {
     flex: 1;
     overflow-y: auto;
+    padding-left: 20px;
+    padding-right: 20px;
 }
 
 .comments-list {

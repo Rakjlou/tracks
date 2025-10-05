@@ -1,6 +1,15 @@
 /* Audio Comment Widget Styles */
 /* Shared styles for the audio comment widget used in both track and playlist pages */
 
+/* Sticky Player Wrapper */
+.player-sticky-wrapper {
+    position: sticky;
+    top: 0;
+    background-color: var(--color-bg);
+    z-index: 100;
+    padding: 20px 0;
+}
+
 /* Player Controls */
 .controls {
     display: flex;
@@ -84,11 +93,6 @@
     text-align: center;
     color: var(--color-text-muted);
     font-style: italic;
-}
-
-.comments-list {
-    max-height: 400px;
-    overflow-y: auto;
 }
 
 /* Comment Thread */
