@@ -37,7 +37,7 @@ class AudioCommentWidget {
             this.options.commentsContainer.addEventListener('click', (e) => {
                 const target = e.target;
 
-                if (target.classList.contains('goto-btn')) {
+                if (target.classList.contains('comment-timestamp')) {
                     const commentId = parseInt(target.closest('.comment-thread').dataset.commentId);
                     this.seekToComment(commentId);
                 }
