@@ -47,13 +47,15 @@
     overflow: hidden;
 }
 
-/* Comments Toggle */
-.comments-toggle {
-    text-align: center;
+/* Control Panel */
+.control-panel {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
     margin-bottom: 20px;
 }
 
-.toggle-btn {
+.control-btn {
     background-color: #222;
     border: 1px solid #444;
     color: var(--color-text);
@@ -65,7 +67,7 @@
     transition: background-color 0.2s;
 }
 
-.toggle-btn:hover {
+.control-btn:hover {
     background-color: #444;
 }
 

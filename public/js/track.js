@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const trackInfo = document.getElementById('trackInfo');
     const playBtn = document.getElementById('playBtn');
     const timeDisplay = document.getElementById('timeDisplay');
+    const downloadBtn = document.getElementById('downloadBtn');
     const commentsToggle = document.getElementById('commentsToggle');
     const commentsContainer = document.getElementById('commentsContainer');
 
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         waveformContainer: '#waveform',
         playButton: playBtn,
         timeDisplay: timeDisplay,
+        downloadButton: downloadBtn,
         commentsContainer: commentsContainer,
         commentsToggle: commentsToggle,
         onError: (message) => {
@@ -36,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 currentTrack = data.track;
                 displayTrackInfo();
-                audioWidget.loadTrack(trackUuid);
+                audioWidget.loadTrack(trackUuid, currentTrack.title);
             })
             .catch(error => {
                 showError(handleFetchError(error, 'Track not found or failed to load'), trackTitle, trackInfo);

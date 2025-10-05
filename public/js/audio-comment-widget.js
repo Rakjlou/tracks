@@ -6,6 +6,7 @@ class AudioCommentWidget {
             timeDisplay: null,
             commentsContainer: null,
             commentsToggle: null,
+            downloadButton: null,
             onTrackReady: null,
             onError: null,
             ...options
@@ -18,6 +19,7 @@ class AudioCommentWidget {
         this.showClosedComments = false;
         this.allComments = [];
         this.currentTrackUuid = null;
+        this.currentTrackTitle = null;
         this.previewRegion = null;
         this.outsideClickHandler = null;
 
@@ -31,6 +33,10 @@ class AudioCommentWidget {
 
         if (this.options.commentsToggle) {
             this.options.commentsToggle.addEventListener('click', () => this.toggleClosedComments());
+        }
+
+        if (this.options.downloadButton) {
+            this.options.downloadButton.addEventListener('click', () => this.downloadTrack());
         }
 
         if (this.options.commentsContainer) {
@@ -60,8 +66,9 @@ class AudioCommentWidget {
         }
     }
 
-    loadTrack(trackUuid) {
+    loadTrack(trackUuid, trackTitle = null) {
         this.currentTrackUuid = trackUuid;
+        this.currentTrackTitle = trackTitle;
         this.resetPlayer();
 
         if (this.options.commentsContainer) {
@@ -627,6 +634,41 @@ class AudioCommentWidget {
         }
 
         this.loadCommentMarkers();
+    }
+
+    downloadTrack() {
+        if (!this.currentTrackUuid) return;
+
+        fetch(`/api/track/${this.currentTrackUuid}/audio`, { method: 'HEAD' })
+            .then(response => {
+                const contentType = response.headers.get('content-type');
+                let extension = '.mp3';
+
+                if (contentType) {
+                    if (contentType.includes('wav')) extension = '.wav';
+                    else if (contentType.includes('ogg')) extension = '.ogg';
+                    else if (contentType.includes('m4a') || contentType.includes('mp4')) extension = '.m4a';
+                }
+
+                const filename = this.currentTrackTitle
+                    ? `${this.currentTrackTitle}${extension}`
+                    : `track-${this.currentTrackUuid}${extension}`;
+
+                const link = document.createElement('a');
+                link.href = `/api/track/${this.currentTrackUuid}/audio`;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            })
+            .catch(() => {
+                const link = document.createElement('a');
+                link.href = `/api/track/${this.currentTrackUuid}/audio`;
+                link.download = this.currentTrackTitle || `track-${this.currentTrackUuid}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
     }
 
     destroy() {

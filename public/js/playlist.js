@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentTrackTitle = document.getElementById('currentTrackTitle');
     const playBtn = document.getElementById('playBtn');
     const timeDisplay = document.getElementById('timeDisplay');
+    const downloadBtn = document.getElementById('downloadBtn');
     const commentsToggle = document.getElementById('commentsToggle');
     const commentsContainer = document.getElementById('commentsContainer');
 
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
         waveformContainer: '#waveform',
         playButton: playBtn,
         timeDisplay: timeDisplay,
+        downloadButton: downloadBtn,
         commentsContainer: commentsContainer,
         commentsToggle: commentsToggle,
         onError: (message) => {
@@ -85,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentTrack = track;
         currentTrackTitle.textContent = track.title;
 
-        audioWidget.loadTrack(track.uuid);
+        audioWidget.loadTrack(track.uuid, track.title);
 
         noTrackSelected.style.display = 'none';
         playerContainer.style.display = 'flex';
