@@ -166,8 +166,8 @@
 }
 
 .comment-author {
-    font-weight: 600;
-    color: var(--color-text);
+    font-weight: 700;
+    color: #888;
 }
 
 .comment-content {
