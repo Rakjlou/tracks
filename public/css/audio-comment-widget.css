@@ -102,11 +102,24 @@
     color: var(--color-text-muted);
     margin-bottom: 8px;
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comment-meta-left {
+    display: flex;
     gap: 8px;
     align-items: center;
 }
 
-.comment-timestamp {
+.comment-meta-right {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.comment-timestamp,
+.btn-inline {
     font-weight: bold;
     color: var(--color-text);
     cursor: pointer;
@@ -117,6 +130,9 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    background: none;
+    font-family: inherit;
+    font-size: 12px;
 }
 
 .comment-timestamp::before {
@@ -128,6 +144,10 @@
 .comment-timestamp:hover {
     background-color: var(--color-border);
     border-color: #666;
+}
+
+.btn-inline:hover {
+    background-color: var(--color-border);
 }
 
 .comment-separator {
@@ -164,26 +184,21 @@
     padding-left: 15px;
 }
 
-.comment-actions {
+.toggle-replies-line {
+    padding: 8px;
     margin-top: 10px;
-    display: flex;
-    gap: 10px;
-}
-
-.btn-small {
-    padding: 5px 10px;
+    text-align: center;
     font-size: 12px;
-    background-color: #222;
-    border: 1px solid #444;
-    color: #ccc;
-    border-radius: 3px;
+    color: var(--color-text-muted);
     cursor: pointer;
-    font-family: inherit;
+    transition: background-color 0.2s;
+    border-radius: 3px;
 }
 
-.btn-small:hover {
+.toggle-replies-line:hover {
     background-color: var(--color-border);
 }
+
 
 .empty-comments {
     text-align: center;

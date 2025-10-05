@@ -42,7 +42,7 @@ class AudioCommentWidget {
                     this.seekToComment(commentId);
                 }
 
-                if (target.classList.contains('toggle-replies-btn')) {
+                if (target.classList.contains('toggle-replies-line')) {
                     const thread = target.closest('.comment-thread');
                     this.toggleReplies(thread);
                 }
@@ -278,7 +278,7 @@ class AudioCommentWidget {
 
             const replyBtn = commentEl.querySelector('.reply-btn');
             const closeThreadBtn = commentEl.querySelector('.close-thread-btn');
-            const toggleRepliesBtn = commentEl.querySelector('.toggle-replies-btn');
+            const toggleRepliesLine = commentEl.querySelector('.toggle-replies-line');
 
             replyBtn.dataset.commentId = comment.id;
             closeThreadBtn.dataset.commentId = comment.id;
@@ -288,8 +288,8 @@ class AudioCommentWidget {
             }
 
             if (replyCount > 0) {
-                toggleRepliesBtn.classList.remove('hidden');
-                toggleRepliesBtn.textContent = `Show ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
+                toggleRepliesLine.classList.remove('hidden');
+                toggleRepliesLine.textContent = `show ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
 
                 const repliesContainer = commentEl.querySelector('.replies-container');
                 const replyTemplate = document.getElementById('comment-reply-template');
@@ -323,17 +323,17 @@ class AudioCommentWidget {
 
     toggleReplies(threadElement) {
         const repliesContainer = threadElement.querySelector('.replies-container');
-        const toggleBtn = threadElement.querySelector('.toggle-replies-btn');
+        const toggleLine = threadElement.querySelector('.toggle-replies-line');
         const isHidden = repliesContainer.classList.contains('hidden');
 
         if (isHidden) {
             repliesContainer.classList.remove('hidden');
             const replyCount = repliesContainer.querySelectorAll('.comment-reply').length;
-            toggleBtn.textContent = `Hide ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
+            toggleLine.textContent = `hide replies`;
         } else {
             repliesContainer.classList.add('hidden');
             const replyCount = repliesContainer.querySelectorAll('.comment-reply').length;
-            toggleBtn.textContent = `Show ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
+            toggleLine.textContent = `show ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`;
         }
     }
 
@@ -342,11 +342,11 @@ class AudioCommentWidget {
         if (!threadElement) return;
 
         const repliesContainer = threadElement.querySelector('.replies-container');
-        const toggleBtn = threadElement.querySelector('.toggle-replies-btn');
+        const toggleLine = threadElement.querySelector('.toggle-replies-line');
 
         if (repliesContainer && !repliesContainer.classList.contains('hidden')) {
             threadElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        } else if (toggleBtn && !toggleBtn.classList.contains('hidden')) {
+        } else if (toggleLine && !toggleLine.classList.contains('hidden')) {
             this.toggleReplies(threadElement);
             threadElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {

@@ -71,16 +71,18 @@
     <div class="comment-thread">
         <div class="comment-item root-comment">
             <div class="comment-meta">
-                <span class="comment-timestamp"></span>
-                <span class="comment-separator">·</span>
-                <span class="comment-author"></span>
+                <div class="comment-meta-left">
+                    <span class="comment-timestamp"></span>
+                    <span class="comment-separator">·</span>
+                    <span class="comment-author"></span>
+                </div>
+                <div class="comment-meta-right">
+                    <button class="btn-inline reply-btn">↩ Reply</button>
+                    <button class="btn-inline close-thread-btn hidden">✕ Close</button>
+                </div>
             </div>
             <div class="comment-content"></div>
-            <div class="comment-actions">
-                <button class="btn-small toggle-replies-btn hidden"></button>
-                <button class="btn-small reply-btn">Reply</button>
-                <button class="btn-small close-thread-btn hidden">Close Thread</button>
-            </div>
+            <div class="toggle-replies-line hidden"></div>
         </div>
         <div class="replies-container hidden"></div>
     </div>
